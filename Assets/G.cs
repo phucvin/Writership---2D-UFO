@@ -70,6 +70,33 @@ public class G : MonoBehaviour
                 Time.timeScale = TimeScale.Read();
             }
         ));
+        {
+            var requested = new List<GameObject>();
+            cd.Add(Engine.RegisterListener(
+                new object[] { Tick, RequestDestroy },
+                () =>
+                {
+                    if (Tick.Read().Count > 0)
+                    {
+                        GameObject stillAlive = null;
+                        for (int i = 0, n = requested.Count; i < n; ++i)
+                        {
+                            if (requested[i])
+                            {
+                                stillAlive = requested[i];
+                                break;
+                            }
+                        }
+                        if (stillAlive)
+                        {
+                            Debug.LogWarning("Requested to destroy but still alive", stillAlive);
+                        }
+                        requested.Clear();
+                    }
+                    requested.AddRange(RequestDestroy.Read());
+                }
+            ));
+        }
     }
 
     private void OnDisable()
