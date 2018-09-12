@@ -137,9 +137,9 @@ public class CompletePlayerController : MonoBehaviour
         movement.Write(new Vector2(moveHorizontal, moveVertical));
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        var pickUp = other.gameObject.GetComponent<CompletePickUp>();
+        var pickUp = collision.gameObject.GetComponent<CompletePickUp>();
         if (!pickUp) return;
 
         G.PickUp.Fire(new Ops.PickUp
@@ -147,6 +147,14 @@ public class CompletePlayerController : MonoBehaviour
             Player = this,
             Item = pickUp
         });
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        var enemy = collision.gameObject.GetComponent<CompleteEnemy>();
+        if (!enemy) return;
+
+        G.Restart.Fire(Empty.Instance);
     }
 
     private static IEnumerator WaitThenRestart(IOp<Empty> restart)
