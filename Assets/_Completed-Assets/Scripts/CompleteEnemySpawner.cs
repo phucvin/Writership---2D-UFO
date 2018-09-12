@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Writership;
 
 public class CompleteEnemySpawner : MonoBehaviour
@@ -14,6 +15,9 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private IEl<float> currentDelay;
     private IEl<int> currentEnemies;
+    private IOp<Vector2> preSpawn;
+    private ILi<Spawning> spawning;
+    private Spawning.Factory spawningFactory;
     private IOp<Vector2> spawn;
     private System.Random rand;
 
@@ -24,7 +28,12 @@ public class CompleteEnemySpawner : MonoBehaviour
         currentDelay = G.Engine.El(delay);
         currentEnemies = G.Engine.El(0);
         spawn = G.Engine.Op<Vector2>();
+        spawning = G.Engine.Li(new List<Spawning>());
+        preSpawn = G.Engine.Op<Vector2>();
+        spawningFactory = new Spawning.Factory();
         rand = new System.Random();
+
+        spawningFactory.Setup(cd, G.Engine, G.Tick, spawn);
     }
 
     private void OnEnable()
@@ -61,7 +70,34 @@ public class CompleteEnemySpawner : MonoBehaviour
                         rand.Next((int)(-area.x / 2), (int)(area.x / 2)),
                         rand.Next((int)(-area.y / 2), (int)(area.y / 2))
                     );
-                    spawn.Fire(at);
+                    preSpawn.Fire(at);
+                }
+            }
+        ));
+        cd.Add(G.Engine.RegisterComputer(
+            new object[] { preSpawn, G.Tick }, // TODO Should be G.Tick.Applied, but error
+            () =>
+            {
+                var p = preSpawn.Read();
+                var t = G.Tick.Read();
+                if (p.Count <= 0 && t.Count <= 0) return;
+
+                var s = spawning.AsWrite();
+                for (int i = 0, n = p.Count; i < n; ++i)
+                {
+                    s.Add(spawningFactory.Create(p[i], delay));
+                }
+                if (t.Count > 0)
+                {
+                    s.RemoveAll(it =>
+                    {
+                        if (it.CurrentDelay.Read() <= 0)
+                        {
+                            spawningFactory.Dispose(it);
+                            return true;
+                        }
+                        else return false;
+                    });
                 }
             }
         ));
@@ -85,5 +121,72 @@ public class CompleteEnemySpawner : MonoBehaviour
     private void OnDisable()
     {
         cd.Dispose();
+    }
+
+    private class Spawning
+    {
+        public readonly Vector2 At;
+        public readonly IEl<float> CurrentDelay;
+
+        public Spawning(IEngine engine, Vector2 at, float delay)
+        {
+            At = at;
+            CurrentDelay = engine.El(delay);
+        }
+
+        public void Setup(CompositeDisposable cd, IEngine engine,
+            IOp<float> tick, IOp<Vector2> spawn)
+        {
+            cd.Add(engine.RegisterComputer(
+                new object[] { tick },
+                () =>
+                {
+                    float d = CurrentDelay.Read();
+                    var t = tick.Read();
+                    for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
+                    if (d != CurrentDelay.Read()) CurrentDelay.Write(d);
+                }
+            ));
+            cd.Add(engine.RegisterComputer(
+                new object[] { CurrentDelay },
+                () =>
+                {
+                    if (CurrentDelay.Read() <= 0)
+                    {
+                        spawn.Fire(At);
+                    }
+                }
+            ));
+        }
+
+        public class Factory : CompositeDisposableFactory<Spawning>
+        {
+            private IEngine engine;
+            private IOp<float> tick;
+            private IOp<Vector2> spawn;
+
+            public void Setup(CompositeDisposable cd, IEngine engine,
+                IOp<float> tick, IOp<Vector2> spawn)
+            {
+                this.engine = engine;
+                this.tick = tick;
+                this.spawn = spawn;
+
+                cd.Add(this);
+            }
+
+            public Spawning Create(Vector2 at, float delay)
+            {
+                var s = new Spawning(engine, at, delay);
+                var cd = Add(s);
+                s.Setup(cd, engine, tick, spawn);
+                return s;
+            }
+
+            public void Dispose(Spawning s)
+            {
+                Remove(s).Dispose();
+            }
+        }
     }
 }
