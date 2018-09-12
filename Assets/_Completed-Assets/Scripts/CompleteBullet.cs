@@ -12,7 +12,8 @@ public class CompleteBullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!collision.gameObject.CompareTag("Wall")) return;
+        if (collision.gameObject.CompareTag("Player") ||
+            collision.gameObject.CompareTag("PickUp")) return;
 
         Destroy(gameObject);
         var e = Instantiate(effect, transform.position, transform.rotation);
