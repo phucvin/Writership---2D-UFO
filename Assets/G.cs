@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Writership;
 
 public class G : MonoBehaviour
@@ -15,6 +16,7 @@ public class G : MonoBehaviour
     public static readonly IOp<float> Tick = Engine.Op<float>();
     public static readonly IEl<int> TotalItemCount = Engine.El(0);
     public static readonly IOp<Empty> AddItem = Engine.Op<Empty>();
+    public static readonly IOp<GameObject> RequestDestroy = Engine.Op<GameObject>();
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 

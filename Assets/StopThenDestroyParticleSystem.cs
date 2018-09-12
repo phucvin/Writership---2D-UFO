@@ -14,7 +14,6 @@ public class StopThenDestroyParticleSystem : MonoBehaviour
         if (!ps) throw new MissingComponentException("ParticleSystem");
         
         W.Mark(ps);
-        W.Mark(gameObject, "destroy");
     }
 
     public IEnumerator Start()
@@ -22,6 +21,6 @@ public class StopThenDestroyParticleSystem : MonoBehaviour
         yield return new WaitForSeconds(delay);
         ps.Stop();
         while (ps.particleCount > 0) yield return null;
-        Destroy(gameObject);
+        G.RequestDestroy.Fire(gameObject);
     }
 }
