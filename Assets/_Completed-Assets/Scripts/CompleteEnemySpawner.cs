@@ -30,9 +30,10 @@ public class CompleteEnemySpawner : MonoBehaviour
     private void OnEnable()
     {
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { G.Tick, spawn },
+            new object[] { currentEnemies, G.Tick, spawn },
             () =>
             {
+                if (currentEnemies.Read() >= maxEnemies) return;
                 var t = G.Tick.Read();
                 var d = currentDelay.Read();
                 if (spawn.Read().Count > 0) d = delay;
