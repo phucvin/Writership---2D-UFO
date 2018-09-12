@@ -14,7 +14,7 @@ public class StopThenDestroyParticleSystem : MonoBehaviour
         if (!ps) throw new MissingComponentException("ParticleSystem");
         
         W.Mark(ps);
-        W.Mark(gameObject);
+        W.Mark(gameObject, "destroy");
     }
 
     public IEnumerator Start()

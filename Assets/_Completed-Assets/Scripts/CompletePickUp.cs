@@ -35,9 +35,8 @@ public class CompletePickUp : MonoBehaviour
                     if (!active)
                     {
                         var e = Instantiate(effect, transform.position, transform.rotation);
-                        W.Mark(e);
+                        W.Mark(e, "active");
                         e.SetActive(true);
-                        Destroy(e, 1f);
                     }
                 }
             }
