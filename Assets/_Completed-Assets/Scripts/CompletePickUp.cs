@@ -3,6 +3,9 @@ using Writership;
 
 public class CompletePickUp : MonoBehaviour
 {
+    [SerializeField]
+    private GameObject effect = null;
+
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
     private void Awake()
@@ -28,6 +31,14 @@ public class CompletePickUp : MonoBehaviour
                 {
                     W.Mark(gameObject, "active");
                     gameObject.SetActive(active);
+
+                    if (!active)
+                    {
+                        var e = Instantiate(effect, transform.position, transform.rotation);
+                        W.Mark(e);
+                        e.SetActive(true);
+                        Destroy(e, 1f);
+                    }
                 }
             }
         ));
