@@ -43,24 +43,31 @@ public class CompleteEnemySpawner : MonoBehaviour
     private void OnEnable()
     {
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { currentEnemies, G.Tick, spawn },
+            new object[] { currentEnemies, G.Tick, spawn, G.Restart },
             () =>
             {
-                if (currentEnemies.Read() >= maxEnemies) return;
                 var t = G.Tick.Read();
                 var d = currentDelay.Read();
-                if (spawn.Read().Count > 0) d = delay;
-                for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
-                d = Mathf.Max(0, d);
+                if (G.Restart.Read().Count > 0)
+                {
+                    d = delay;
+                }
+                else if (currentEnemies.Read() < maxEnemies)
+                {
+                    if (spawn.Read().Count > 0) d = delay;
+                    for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
+                    d = Mathf.Max(0, d);
+                }
                 if (d != currentDelay.Read()) currentDelay.Write(d);
             }
         ));
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { spawn, G.Hit },
+            new object[] { spawn, G.Hit, G.Restart },
             () =>
             {
                 int e = currentEnemies.Read();
-                e = e + spawn.Read().Count - G.Hit.Read().Count;
+                if (G.Restart.Read().Count > 0) e = 0;
+                else e = e + spawn.Read().Count - G.Hit.Read().Count;
                 if (e != currentEnemies.Read()) currentEnemies.Write(e);
             }
         ));
@@ -79,23 +86,25 @@ public class CompleteEnemySpawner : MonoBehaviour
             }
         ));
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { preSpawn, G.Tick }, // TODO Should be G.Tick.Applied, but error
+            // TODO Should be G.Tick.Applied, but error
+            new object[] { preSpawn, G.Tick, G.Restart },
             () =>
             {
                 var p = preSpawn.Read();
                 var t = G.Tick.Read();
-                if (p.Count <= 0 && t.Count <= 0) return;
+                var r = G.Restart.Read().Count > 0;
+                if (p.Count <= 0 && t.Count <= 0 && !r) return;
 
                 var s = spawning.AsWrite();
                 for (int i = 0, n = p.Count; i < n; ++i)
                 {
                     s.Add(spawningFactory.Create(p[i], indicating));
                 }
-                if (t.Count > 0)
+                if (t.Count > 0 || r)
                 {
                     s.RemoveAll(it =>
                     {
-                        if (it.CurrentDelay.Read() <= 0)
+                        if (it.CurrentDelay.Read() <= 0 || r)
                         {
                             spawningFactory.Dispose(it);
                             return true;
