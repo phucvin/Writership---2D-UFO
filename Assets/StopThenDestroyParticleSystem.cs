@@ -21,6 +21,8 @@ public class StopThenDestroyParticleSystem : MonoBehaviour
         yield return new WaitForSeconds(delay);
         ps.Stop();
         while (ps.particleCount > 0) yield return null;
+        // Not actually destroy, but make a request
+        // to avoid conflicting in W.Mark
         G.RequestDestroy.Fire(gameObject);
     }
 }
