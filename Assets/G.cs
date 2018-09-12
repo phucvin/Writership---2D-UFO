@@ -20,6 +20,8 @@ public class G : MonoBehaviour
 
     private void Awake()
     {
+        W.Mark(typeof(Time), "timeScale");
+
         Instance = this;
     }
 
@@ -63,7 +65,6 @@ public class G : MonoBehaviour
             new object[] { TimeScale },
             () =>
             {
-                W.Mark(typeof(Time), "timeScale");
                 Time.timeScale = TimeScale.Read();
             }
         ));

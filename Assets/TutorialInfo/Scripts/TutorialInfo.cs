@@ -24,6 +24,11 @@ public class TutorialInfo : MonoBehaviour
 
     private void Awake()
     {
+        W.Mark(typeof(PlayerPrefs), ShowAtStartPrefsKey);
+        W.Mark(showAtStartToggle, "isOn");
+        W.Mark(overlay, "active");
+        W.Mark(mainListener, "enabled");
+
         if (PlayerPrefs.HasKey(ShowAtStartPrefsKey))
         {
             showAtStart = PlayerPrefs.GetInt(ShowAtStartPrefsKey) == 1;
@@ -60,9 +65,7 @@ public class TutorialInfo : MonoBehaviour
             () =>
             {
                 bool s = ShowAtStart.Read();
-                W.Mark(typeof(PlayerPrefs), ShowAtStartPrefsKey);
                 PlayerPrefs.SetInt(ShowAtStartPrefsKey, s ? 1 : 0);
-                W.Mark(showAtStartToggle, "isOn");
                 if (showAtStartToggle.isOn != s) showAtStartToggle.isOn = s;
             }
         ));
@@ -71,9 +74,7 @@ public class TutorialInfo : MonoBehaviour
             () =>
             {
                 bool i = G.IsTutorialInfoShowing.Read();
-                W.Mark(overlay, "active");
                 overlay.SetActive(i);
-                W.Mark(mainListener, "enabled");
                 mainListener.enabled = !i;
             }
         ));

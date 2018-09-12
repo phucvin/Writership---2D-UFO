@@ -10,6 +10,8 @@ public class CompletePickUp : MonoBehaviour
 
     private void Awake()
     {
+        W.Mark(gameObject, "active");
+
         G.AddItem.Fire(Empty.Instance);
 
         cd.Add(G.Engine.RegisterListener(
@@ -29,7 +31,6 @@ public class CompletePickUp : MonoBehaviour
                 }
                 if (active != gameObject.activeSelf)
                 {
-                    W.Mark(gameObject, "active");
                     gameObject.SetActive(active);
 
                     if (!active)

@@ -27,6 +27,11 @@ public class CompletePlayerController : MonoBehaviour
         rb2d = GetComponent<Rigidbody2D>();
         orgPos = transform.position;
 
+        W.Mark(rb2d);
+        W.Mark(transform, "position");
+        W.Mark(countText, "text");
+        W.Mark(winText, "text");
+
         Position = G.Engine.El(transform.position);
         Score = G.Engine.El(0);
         movement = G.Engine.El(Vector2.zero);
@@ -49,7 +54,6 @@ public class CompletePlayerController : MonoBehaviour
             new object[] { Score, G.TotalItemCount },
             () =>
             {
-                W.Mark(countText, "text");
                 countText.text = string.Format("Count: {0} / {1}",
                     Score.Read(), G.TotalItemCount.Read());
             }
@@ -58,7 +62,6 @@ public class CompletePlayerController : MonoBehaviour
             new object[] { Score, G.TotalItemCount },
             () =>
             {
-                W.Mark(winText, "text");
                 if (Score.Read() >= G.TotalItemCount.Read()) winText.text = "You win!";
                 else winText.text = "";
             }
@@ -92,11 +95,7 @@ public class CompletePlayerController : MonoBehaviour
             {
                 if (G.Tick.Read().Count <= 0 || G.Restart.Read().Count <= 0) return;
 
-                if (G.Restart.Read().Count > 0)
-                {
-                    W.Mark(transform, "position");
-                    transform.position = orgPos;
-                }
+                if (G.Restart.Read().Count > 0) transform.position = orgPos;
                 Position.Write(transform.position);
             }
         ));
@@ -158,7 +157,6 @@ public class CompletePlayerController : MonoBehaviour
 
     private static IEnumerator LoopFixedUpdate(Rigidbody2D rb2d, bool needStop, Vector2 forceToAdd)
     {
-        W.Mark(rb2d);
         if (needStop)
         {
             rb2d.velocity = Vector2.zero;

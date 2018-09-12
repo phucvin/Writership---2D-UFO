@@ -13,6 +13,8 @@ public class CompleteCameraController : MonoBehaviour
     private void Awake()
     {
         offset = transform.position - player.transform.position;
+
+        W.Mark(transform, "position");
     }
 
     private void OnEnable()
@@ -21,7 +23,6 @@ public class CompleteCameraController : MonoBehaviour
             new object[] { player.Position },
             () =>
             {
-                W.Mark(transform, "position");
                 transform.position = player.Position.Read() + offset;
             }
         ));

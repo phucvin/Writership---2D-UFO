@@ -9,6 +9,8 @@ public class CompleteRotator : MonoBehaviour
 
     private void Awake()
     {
+        W.Mark(transform, "rotation");
+
         rotation = G.Engine.El(transform.rotation);
     }
 
@@ -42,7 +44,6 @@ public class CompleteRotator : MonoBehaviour
             new object[] { rotation },
             () =>
             {
-                W.Mark(transform, "rotation");
                 transform.rotation = rotation.Read();
             }
         ));
