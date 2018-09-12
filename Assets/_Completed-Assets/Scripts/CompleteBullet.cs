@@ -3,6 +3,8 @@
 public class CompleteBullet : MonoBehaviour
 {
     [SerializeField]
+    private CompletePlayerController player = null;
+    [SerializeField]
     private GameObject effect = null;
 
     private void Awake()
@@ -14,6 +16,16 @@ public class CompleteBullet : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player") ||
             collision.gameObject.CompareTag("PickUp")) return;
+
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            G.Hit.Fire(new Ops.Hit
+            {
+                FromPlayer = player,
+                WithBullet = this,
+                ToEnemy = collision.gameObject
+            });
+        }
 
         Destroy(gameObject);
         var e = Instantiate(effect, transform.position, transform.rotation);

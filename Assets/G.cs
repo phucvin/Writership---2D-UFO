@@ -17,6 +17,7 @@ public class G : MonoBehaviour
     public static readonly IEl<int> TotalItemCount = Engine.El(0);
     public static readonly IOp<Empty> AddItem = Engine.Op<Empty>();
     public static readonly IOp<GameObject> RequestDestroy = Engine.Op<GameObject>();
+    public static readonly IOp<Ops.Hit> Hit = Engine.Op<Ops.Hit>();
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
