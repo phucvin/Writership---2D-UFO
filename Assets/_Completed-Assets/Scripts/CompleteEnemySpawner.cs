@@ -12,6 +12,10 @@ public class CompleteEnemySpawner : MonoBehaviour
     private float delay = 1f;
     [SerializeField]
     private int maxEnemies = 2;
+    [SerializeField]
+    private GameObject indicator = null;
+    [SerializeField]
+    private float indicating = 1f;
 
     private IEl<float> currentDelay;
     private IEl<int> currentEnemies;
@@ -85,7 +89,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                 var s = spawning.AsWrite();
                 for (int i = 0, n = p.Count; i < n; ++i)
                 {
-                    s.Add(spawningFactory.Create(p[i], delay));
+                    s.Add(spawningFactory.Create(p[i], indicating));
                 }
                 if (t.Count > 0)
                 {
@@ -109,13 +113,41 @@ public class CompleteEnemySpawner : MonoBehaviour
                 var s = spawn.Read();
                 for (int i = 0, n = s.Count; i < n; ++i)
                 {
-                    Vector3 at = s[i];
-                    var e = Instantiate(what, transform.position + at, transform.rotation);
+                    var e = Instantiate(what, transform.position + (Vector3)s[i], transform.rotation);
                     W.Mark(e, "active");
                     e.SetActive(true);
                 }
             }
         ));
+        {
+            var created = new List<GameObject>();
+            System.Action destroyCreated = () =>
+            {
+                for (int i = 0, n = created.Count; i < n; ++i)
+                {
+                    Destroy(created[i]);
+                }
+                created.Clear();
+            };
+            cd.Add(new DisposableAction(destroyCreated));
+            cd.Add(G.Engine.RegisterListener(
+                new object[] { spawning },
+                () =>
+                {
+                    destroyCreated();
+
+                    var s = spawning.Read();
+                    for (int i = 0, n = s.Count; i < n; ++i)
+                    {
+                        var o = Instantiate(indicator, transform.position + (Vector3)s[i].At, transform.rotation);
+                        W.Mark(o, "destroy");
+                        W.Mark(o, "active");
+                        o.SetActive(true);
+                        created.Add(o);
+                    }
+                }
+            ));
+        }
     }
 
     private void OnDisable()
