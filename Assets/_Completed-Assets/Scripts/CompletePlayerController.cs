@@ -154,7 +154,7 @@ public class CompletePlayerController : MonoBehaviour
         var enemy = collision.gameObject.GetComponent<CompleteEnemy>();
         if (!enemy) return;
 
-        G.Restart.Fire(Empty.Instance);
+        G.TouchEnemy.Fire(Empty.Instance);
     }
 
     private static IEnumerator WaitThenRestart(IOp<Empty> restart)

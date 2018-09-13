@@ -86,12 +86,11 @@ public class CompleteEnemySpawner : MonoBehaviour
             }
         ));
         cd.Add(G.Engine.RegisterComputer(
-            // TODO Should be G.Tick.Applied, but error
-            new object[] { preSpawn, G.Tick, G.Restart },
+            new object[] { preSpawn, G.Tick.Applied, G.Restart },
             () =>
             {
                 var p = preSpawn.Read();
-                var t = G.Tick.Read();
+                var t = G.Tick.Applied.Read();
                 var r = G.Restart.Read().Count > 0;
                 if (p.Count <= 0 && t.Count <= 0 && !r) return;
 

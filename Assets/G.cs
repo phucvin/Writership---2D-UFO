@@ -18,6 +18,7 @@ public class G : MonoBehaviour
     public static readonly IOp<Empty> AddItem = Engine.Op<Empty>();
     public static readonly IOp<GameObject> RequestDestroy = Engine.Op<GameObject>();
     public static readonly IOp<Ops.Hit> Hit = Engine.Op<Ops.Hit>();
+    public static readonly IOp<Empty> TouchEnemy = Engine.Op<Empty>();
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -61,6 +62,16 @@ public class G : MonoBehaviour
                 int t = TotalItemCount.Read();
                 t += AddItem.Read().Count;
                 if (t != TotalItemCount.Read()) TotalItemCount.Write(t);
+            }
+        ));
+        cd.Add(Engine.RegisterComputer(
+            new object[] { TouchEnemy },
+            () =>
+            {
+                if (TouchEnemy.Read().Count > 0)
+                {
+                    Restart.Fire(Empty.Instance);
+                }
             }
         ));
 
