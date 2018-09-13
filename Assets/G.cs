@@ -56,7 +56,7 @@ public class G : MonoBehaviour
             }
         ));
         cd.Add(Engine.RegisterComputer(
-            new object[] { AddItem, PickUp },
+            new object[] { AddItem },
             () =>
             {
                 int t = TotalItemCount.Read();

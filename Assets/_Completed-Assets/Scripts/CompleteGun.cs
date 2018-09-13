@@ -9,7 +9,11 @@ public class CompleteGun : MonoBehaviour
     [SerializeField]
     private float delay = 0.2f;
 
+    [SerializeField]
+    private CompletePlayerAi ai = null;
+
     private IEl<bool> isFiring;
+    private IEl<bool> isManualFiring;
     private IEl<float> currentDelay;
     private IOp<Empty> fire;
 
@@ -18,6 +22,7 @@ public class CompleteGun : MonoBehaviour
     private void Awake()
     {
         isFiring = G.Engine.El(false);
+        isManualFiring = G.Engine.El(false);
         currentDelay = G.Engine.El(0f);
         fire = G.Engine.Op<Empty>();
     }
@@ -54,6 +59,15 @@ public class CompleteGun : MonoBehaviour
                 if (d != currentDelay.Read()) currentDelay.Write(d);
             }
         ));
+        cd.Add(G.Engine.RegisterComputer(
+            new object[] { isManualFiring, ai.IsGunFiring },
+            () =>
+            {
+                bool f = isFiring.Read();
+                f = isManualFiring.Read() || ai.IsGunFiring.Read();
+                if (f != isFiring.Read()) isFiring.Write(f);
+            }
+        ));
 
         cd.Add(G.Engine.RegisterListener(
             new object[] { fire },
@@ -78,6 +92,6 @@ public class CompleteGun : MonoBehaviour
     private void Update()
     {
         bool f = Input.GetButton("Fire1");
-        if (f != isFiring.Read()) isFiring.Write(f);
+        if (f != isManualFiring.Read()) isManualFiring.Write(f);
     }
 }
