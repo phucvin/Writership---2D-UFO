@@ -6,16 +6,29 @@ public class CompletePlayerAi : MonoBehaviour
     public IEl<bool> IsEnabled { get; private set; }
     public IEl<bool> IsGunFiring { get; private set; }
 
+    private IOp<Empty> toggle;
+
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
     private void Awake()
     {
-        IsEnabled = G.Engine.El(enabled);
+        IsEnabled = G.Engine.El(false);
         IsGunFiring = G.Engine.El(false);
+        toggle = G.Engine.Op<Empty>();
     }
 
     private void OnEnable()
     {
+        cd.Add(G.Engine.RegisterComputer(
+            new object[] { toggle },
+            () =>
+            {
+                if (toggle.Read().Count % 2 == 1)
+                {
+                    IsEnabled.Write(!IsEnabled.Read());
+                }
+            }
+        ));
         cd.Add(G.Engine.RegisterListener(
             new object[] { IsEnabled, G.Tick },
             () =>
@@ -35,5 +48,13 @@ public class CompletePlayerAi : MonoBehaviour
     private void OnDisable()
     {
         cd.Dispose();
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            toggle.Fire(Empty.Instance);
+        }
     }
 }
