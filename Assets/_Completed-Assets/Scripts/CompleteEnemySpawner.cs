@@ -21,6 +21,7 @@ public class CompleteEnemySpawner : MonoBehaviour
     private IEl<int> currentEnemies;
     private IOp<Vector2> preSpawn;
     private ILi<Spawning> spawning;
+    private Watcher spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
     private IOp<Vector2> spawn;
     private System.Random rand;
@@ -33,6 +34,10 @@ public class CompleteEnemySpawner : MonoBehaviour
         currentEnemies = G.Engine.El(0);
         spawn = G.Engine.Op<Vector2>();
         spawning = G.Engine.Li(new List<Spawning>());
+        spawningCurrentDelayWatcher = G.Engine.Watcher().Setup(
+            cd, G.Engine,
+            spawning, it => it.CurrentDelay
+        );
         preSpawn = G.Engine.Op<Vector2>();
         spawningFactory = new Spawning.Factory();
         rand = new System.Random();
@@ -86,20 +91,20 @@ public class CompleteEnemySpawner : MonoBehaviour
             }
         ));
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { preSpawn, G.Tick.Applied, G.Restart },
+            new object[] { preSpawn, spawningCurrentDelayWatcher, G.Restart },
             () =>
             {
                 var p = preSpawn.Read();
-                var t = G.Tick.Applied.Read();
+                var w = spawningCurrentDelayWatcher.Read().Count > 0;
                 var r = G.Restart.Read().Count > 0;
-                if (p.Count <= 0 && t.Count <= 0 && !r) return;
+                if (p.Count <= 0 && !w && !r) return;
 
                 var s = spawning.AsWrite();
                 for (int i = 0, n = p.Count; i < n; ++i)
                 {
                     s.Add(spawningFactory.Create(p[i], indicating));
                 }
-                if (t.Count > 0 || r)
+                if (w || r)
                 {
                     s.RemoveAll(it =>
                     {

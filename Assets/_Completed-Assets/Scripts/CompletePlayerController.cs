@@ -93,9 +93,12 @@ public class CompletePlayerController : MonoBehaviour
             new object[] { G.Tick, G.Restart },
             () =>
             {
-                if (G.Tick.Read().Count <= 0 || G.Restart.Read().Count <= 0) return;
+                if (G.Tick.Read().Count <= 0 && G.Restart.Read().Count <= 0) return;
 
-                if (G.Restart.Read().Count > 0) transform.position = orgPos;
+                if (G.Restart.Read().Count > 0)
+                {
+                    transform.position = orgPos;
+                }
                 Position.Write(transform.position);
             }
         ));
