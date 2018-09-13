@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Writership;
 
@@ -37,15 +36,7 @@ public class G : MonoBehaviour
 
     private void OnEnable()
     {
-        IsGameRunning.Compute(cd, Engine,
-            new object[] { StartGame },
-            value =>
-            {
-                if (StartGame.Read().Count > 0 && !value) value = true;
-                return value;
-            }
-        );
-        /*cd.Add(Engine.RegisterComputer(
+        cd.Add(Engine.RegisterComputer(
             new object[] { StartGame },
             () =>
             {
@@ -53,16 +44,8 @@ public class G : MonoBehaviour
                 if (StartGame.Read().Count > 0 && !i) i = true;
                 if (i != IsGameRunning.Read()) IsGameRunning.Write(i);
             }
-        ));*/
-        TimeScale.Compute(cd, Engine,
-            new object[] { IsTutorialInfoShowing, IsGameRunning },
-            _ =>
-            {
-                if (IsGameRunning.Read()) return 1;
-                else if (IsTutorialInfoShowing.Read()) return 0;
-                else throw new NotImplementedException();
-            });
-        /*cd.Add(Engine.RegisterComputer(
+        ));
+        cd.Add(Engine.RegisterComputer(
             new object[] { IsTutorialInfoShowing, IsGameRunning },
             () =>
             {
@@ -71,7 +54,7 @@ public class G : MonoBehaviour
                 else if (IsTutorialInfoShowing.Read()) t = 0;
                 if (t != TimeScale.Read()) TimeScale.Write(t);
             }
-        ));*/
+        ));
         cd.Add(Engine.RegisterComputer(
             new object[] { AddItem },
             () =>
@@ -92,19 +75,13 @@ public class G : MonoBehaviour
             }
         ));
 
-        TimeScale.Listen(cd, Engine,
-            value =>
-            {
-                Time.timeScale = value;
-            }
-        );
-        /*cd.Add(Engine.RegisterListener(
+        cd.Add(Engine.RegisterListener(
             new object[] { TimeScale },
             () =>
             {
                 Time.timeScale = TimeScale.Read();
             }
-        ));*/
+        ));
         {
             var requested = new List<GameObject>();
             cd.Add(Engine.RegisterListener(
