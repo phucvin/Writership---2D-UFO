@@ -43,6 +43,11 @@ public class TutorialInfo : MonoBehaviour
 
         ShowAtStart = G.Engine.El(showAtStart);
         ToggleShowAtStart = G.Engine.Op<Empty>();
+
+        if (!showAtStart)
+        {
+            G.StartGame.Fire(Empty.Instance);
+        }
     }
 
     private void OnEnable()
@@ -61,8 +66,8 @@ public class TutorialInfo : MonoBehaviour
             () =>
             {
                 bool i = G.IsTutorialInfoShowing.Read();
-                if (G.IsGameRunning.Read()) i = false;
-                else if (G.Restart.Read().Count > 0) i = true;
+                if (G.Restart.Read().Count > 0) i = true;
+                else if (G.IsGameRunning.Read()) i = false;
                 else if (ShowAtStart.Read()) i = true;
                 if (i != G.IsTutorialInfoShowing.Read()) G.IsTutorialInfoShowing.Write(i);
             }

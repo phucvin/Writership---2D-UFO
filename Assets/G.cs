@@ -9,7 +9,7 @@ public class G : MonoBehaviour
 
     public static readonly IEngine Engine = new MultithreadEngine();
     public static readonly IEl<bool> IsTutorialInfoShowing = Engine.El(false);
-    public static readonly IOp<Empty> StartGame = Engine.Op<Empty>();
+    public static readonly IOp<Empty> StartGame = Engine.Op<Empty>(allowWriters: true);
     public static readonly IEl<bool> IsGameRunning = Engine.El(false);
     public static readonly IOp<Empty> Restart = Engine.Op<Empty>(allowWriters: true);
     public static readonly IOp<Ops.PickUp> PickUp = Engine.Op<Ops.PickUp>();
