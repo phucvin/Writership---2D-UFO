@@ -39,7 +39,7 @@ public class CompletePlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { G.PickUp, G.Restart },
             () =>
             {
@@ -48,32 +48,32 @@ public class CompletePlayerController : MonoBehaviour
                 score += G.PickUp.Read().Count;
                 if (score != Score.Read()) Score.Write(score);
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { Score, G.TotalItemCount },
             () =>
             {
                 bool w = Score.Read() >= G.TotalItemCount.Read();
                 if (w != G.IsWinning.Read()) G.IsWinning.Write(w);
             }
-        ));
+        );
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { Score, G.TotalItemCount },
             () =>
             {
                 countText.text = string.Format("Count: {0} / {1}",
                     Score.Read(), G.TotalItemCount.Read());
             }
-        ));
-        cd.Add(G.Engine.RegisterListener(
+        );
+        G.Engine.Reader(cd,
             new object[] { Score, G.TotalItemCount },
             () =>
             {
                 if (Score.Read() >= G.TotalItemCount.Read()) winText.text = "You win!";
                 else winText.text = "";
             }
-        ));
+        );
         {
             bool canRestart = false;
             Coroutine lastCoroutine = null;
@@ -81,7 +81,7 @@ public class CompletePlayerController : MonoBehaviour
             {
                 if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
             }));
-            cd.Add(G.Engine.RegisterListener(
+            G.Engine.Reader(cd,
                 new object[] { Score, G.TotalItemCount },
                 () =>
                 {
@@ -95,9 +95,10 @@ public class CompletePlayerController : MonoBehaviour
                         lastCoroutine = G.Instance.StartCoroutine(WaitThenRestart(G.Restart));
                     }
                 }
-            ));
+            );
         }
-        cd.Add(G.Engine.RegisterListener(
+
+        G.Engine.Writer(cd,
             new object[] { G.Tick, G.Restart },
             () =>
             {
@@ -109,7 +110,7 @@ public class CompletePlayerController : MonoBehaviour
                 }
                 Position.Write(transform.position);
             }
-        ));
+        );
     }
 
     private void OnApplicationQuit()

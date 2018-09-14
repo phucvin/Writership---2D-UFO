@@ -52,7 +52,7 @@ public class TutorialInfo : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { ToggleShowAtStart },
             () =>
             {
@@ -60,8 +60,8 @@ public class TutorialInfo : MonoBehaviour
                 if (ToggleShowAtStart.Read().Count % 2 == 1) s = !s;
                 if (s != ShowAtStart.Read()) ShowAtStart.Write(s);
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { G.IsGameRunning, ShowAtStart, G.Restart },
             () =>
             {
@@ -71,9 +71,9 @@ public class TutorialInfo : MonoBehaviour
                 else if (ShowAtStart.Read()) i = true;
                 if (i != G.IsTutorialInfoShowing.Read()) G.IsTutorialInfoShowing.Write(i);
             }
-        ));
+        );
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { ShowAtStart },
             () =>
             {
@@ -81,8 +81,8 @@ public class TutorialInfo : MonoBehaviour
                 PlayerPrefs.SetInt(ShowAtStartPrefsKey, s ? 1 : 0);
                 if (showAtStartToggle.isOn != s) showAtStartToggle.isOn = s;
             }
-        ));
-        cd.Add(G.Engine.RegisterListener(
+        );
+        G.Engine.Reader(cd,
             new object[] { G.IsTutorialInfoShowing },
             () =>
             {
@@ -90,14 +90,14 @@ public class TutorialInfo : MonoBehaviour
                 overlay.SetActive(i);
                 mainListener.enabled = !i;
             }
-        ));
-        cd.Add(G.Engine.RegisterListener(
+        );
+        G.Engine.Reader(cd,
             new object[] { G.Restart },
             () =>
             {
                 if (G.Restart.Read().Count > 0) animator.SetTrigger("open");
             }
-        ));
+        );
     }
 
     private void OnDisable()

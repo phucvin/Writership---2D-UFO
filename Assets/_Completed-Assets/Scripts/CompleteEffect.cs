@@ -12,7 +12,7 @@ public class CompleteEffect : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { G.Restart, G.RequestDestroy },
             () =>
             {
@@ -31,7 +31,7 @@ public class CompleteEffect : MonoBehaviour
                     Destroy(gameObject);
                 }
             }
-        ));
+        );
     }
 
     private void OnDisable()

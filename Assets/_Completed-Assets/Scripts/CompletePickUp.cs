@@ -14,7 +14,7 @@ public class CompletePickUp : MonoBehaviour
 
         G.AddItem.Fire(Empty.Instance);
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { G.Restart, G.PickUp },
             () =>
             {
@@ -41,7 +41,7 @@ public class CompletePickUp : MonoBehaviour
                     }
                 }
             }
-        ));
+        );
     }
 
     private void OnDestroy()

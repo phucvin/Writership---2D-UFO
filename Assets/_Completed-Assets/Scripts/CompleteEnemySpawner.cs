@@ -21,7 +21,7 @@ public class CompleteEnemySpawner : MonoBehaviour
     private IEl<int> currentEnemies;
     private IOp<Vector2> preSpawn;
     private ILi<Spawning> spawning;
-    private Watcher spawningCurrentDelayWatcher;
+    private ILiWa spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
     private IOp<Vector2> spawn;
     private System.Random rand;
@@ -34,10 +34,7 @@ public class CompleteEnemySpawner : MonoBehaviour
         currentEnemies = G.Engine.El(0);
         spawn = G.Engine.Op<Vector2>();
         spawning = G.Engine.Li(new List<Spawning>());
-        spawningCurrentDelayWatcher = G.Engine.Watcher().Setup(
-            cd, G.Engine,
-            spawning, it => it.CurrentDelay
-        );
+        spawningCurrentDelayWatcher = G.Engine.LiWa(cd, spawning, it => it.CurrentDelay);
         preSpawn = G.Engine.Op<Vector2>();
         spawningFactory = new Spawning.Factory();
         rand = new System.Random();
@@ -47,7 +44,7 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { currentEnemies, G.Tick, spawn, G.Restart },
             () =>
             {
@@ -65,8 +62,8 @@ public class CompleteEnemySpawner : MonoBehaviour
                 }
                 if (d != currentDelay.Read()) currentDelay.Write(d);
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { spawn, G.Hit, G.Restart },
             () =>
             {
@@ -75,8 +72,8 @@ public class CompleteEnemySpawner : MonoBehaviour
                 else e = e + spawn.Read().Count - G.Hit.Read().Count;
                 if (e != currentEnemies.Read()) currentEnemies.Write(e);
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { currentDelay, currentEnemies },
             () =>
             {
@@ -89,8 +86,8 @@ public class CompleteEnemySpawner : MonoBehaviour
                     preSpawn.Fire(at);
                 }
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { preSpawn, spawningCurrentDelayWatcher, G.Restart },
             () =>
             {
@@ -117,9 +114,9 @@ public class CompleteEnemySpawner : MonoBehaviour
                     });
                 }
             }
-        ));
+        );
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { spawn },
             () =>
             {
@@ -131,7 +128,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                     e.SetActive(true);
                 }
             }
-        ));
+        );
         {
             var created = new List<GameObject>();
             System.Action destroyCreated = () =>
@@ -143,7 +140,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                 created.Clear();
             };
             cd.Add(new DisposableAction(destroyCreated));
-            cd.Add(G.Engine.RegisterListener(
+            G.Engine.Reader(cd,
                 new object[] { spawning },
                 () =>
                 {
@@ -159,7 +156,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                         created.Add(o);
                     }
                 }
-            ));
+            );
         }
     }
 
@@ -182,7 +179,7 @@ public class CompleteEnemySpawner : MonoBehaviour
         public void Setup(CompositeDisposable cd, IEngine engine,
             IOp<float> tick, IOp<Vector2> spawn)
         {
-            cd.Add(engine.RegisterComputer(
+            engine.Computer(cd,
                 new object[] { tick },
                 () =>
                 {
@@ -191,8 +188,8 @@ public class CompleteEnemySpawner : MonoBehaviour
                     for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
                     if (d != CurrentDelay.Read()) CurrentDelay.Write(d);
                 }
-            ));
-            cd.Add(engine.RegisterComputer(
+            );
+            engine.Computer(cd,
                 new object[] { CurrentDelay },
                 () =>
                 {
@@ -201,7 +198,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                         spawn.Fire(At);
                     }
                 }
-            ));
+            );
         }
 
         public class Factory : CompositeDisposableFactory<Spawning>

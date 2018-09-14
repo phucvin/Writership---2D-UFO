@@ -19,7 +19,7 @@ public class CompletePlayerAi : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { toggle },
             () =>
             {
@@ -28,8 +28,9 @@ public class CompletePlayerAi : MonoBehaviour
                     IsEnabled.Write(!IsEnabled.Read());
                 }
             }
-        ));
-        cd.Add(G.Engine.RegisterListener(
+        );
+
+        G.Engine.Reader(cd,
             new object[] { IsEnabled, G.Tick },
             () =>
             {
@@ -42,7 +43,7 @@ public class CompletePlayerAi : MonoBehaviour
                 }
                 if (g != IsGunFiring.Read()) IsGunFiring.Write(g);
             }
-        ));
+        );
     }
 
     private void OnDisable()

@@ -29,7 +29,7 @@ public class CompleteGun : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { isFiring, currentDelay, G.Tick },
             () =>
             {
@@ -58,8 +58,8 @@ public class CompleteGun : MonoBehaviour
 
                 if (d != currentDelay.Read()) currentDelay.Write(d);
             }
-        ));
-        cd.Add(G.Engine.RegisterComputer(
+        );
+        G.Engine.Computer(cd,
             new object[] { isManualFiring, ai.IsGunFiring },
             () =>
             {
@@ -67,9 +67,9 @@ public class CompleteGun : MonoBehaviour
                 f = isManualFiring.Read() || ai.IsGunFiring.Read();
                 if (f != isFiring.Read()) isFiring.Write(f);
             }
-        ));
+        );
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { fire },
             () =>
             {
@@ -81,7 +81,7 @@ public class CompleteGun : MonoBehaviour
                     b.SetActive(true);
                 }
             }
-        ));
+        );
     }
 
     private void OnDisable()

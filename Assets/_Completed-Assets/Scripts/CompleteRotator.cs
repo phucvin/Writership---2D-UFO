@@ -16,7 +16,7 @@ public class CompleteRotator : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterComputer(
+        G.Engine.Computer(cd,
             new object[] { G.Tick, G.Restart },
             () =>
             {
@@ -38,15 +38,15 @@ public class CompleteRotator : MonoBehaviour
                 // heavy computation to compute thread
                 if (r != rotation.Read()) rotation.Write(r);
             }
-        ));
+        );
 
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { rotation },
             () =>
             {
                 transform.rotation = rotation.Read();
             }
-        ));
+        );
     }
 
     private void OnDisable()

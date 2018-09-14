@@ -35,7 +35,7 @@ public class G : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(Engine.RegisterComputer(
+        Engine.Computer(cd,
             new object[] { StartGame, Restart },
             () =>
             {
@@ -44,8 +44,8 @@ public class G : MonoBehaviour
                 else if (Restart.Read().Count > 0) i = false;
                 if (i != IsGameRunning.Read()) IsGameRunning.Write(i);
             }
-        ));
-        cd.Add(Engine.RegisterComputer(
+        );
+        Engine.Computer(cd,
             new object[] { AddItem },
             () =>
             {
@@ -53,8 +53,8 @@ public class G : MonoBehaviour
                 t += AddItem.Read().Count;
                 if (t != TotalItemCount.Read()) TotalItemCount.Write(t);
             }
-        ));
-        cd.Add(Engine.RegisterComputer(
+        );
+        Engine.Computer(cd,
             new object[] { TouchEnemy },
             () =>
             {
@@ -63,11 +63,11 @@ public class G : MonoBehaviour
                     Restart.Fire(Empty.Instance);
                 }
             }
-        ));
+        );
 
         {
             var requested = new List<GameObject>();
-            cd.Add(Engine.RegisterListener(
+            Engine.Guarder(cd,
                 new object[] { Tick, RequestDestroy },
                 () =>
                 {
@@ -90,10 +90,10 @@ public class G : MonoBehaviour
                     }
                     requested.AddRange(RequestDestroy.Read());
                 }
-            ));
+            );
         }
 
-        cd.Add(Engine.RegisterComputer(
+        Engine.Guarder(cd,
             new object[] { Restart, IsGameRunning },
             () =>
             {
@@ -102,7 +102,7 @@ public class G : MonoBehaviour
                     throw new InvalidOperationException();
                 }
             }
-        ));
+        );
     }
 
     private void OnDisable()

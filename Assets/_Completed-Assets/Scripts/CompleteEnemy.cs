@@ -12,7 +12,7 @@ public class CompleteEnemy : MonoBehaviour
 
     private void OnEnable()
     {
-        cd.Add(G.Engine.RegisterListener(
+        G.Engine.Reader(cd,
             new object[] { G.Hit, G.Restart },
             () =>
             {
@@ -29,7 +29,7 @@ public class CompleteEnemy : MonoBehaviour
                 }
                 if (d || r) Destroy(gameObject);
             }
-        ));
+        );
     }
 
     private void OnDisable()
