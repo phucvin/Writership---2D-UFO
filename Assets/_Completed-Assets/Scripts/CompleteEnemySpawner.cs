@@ -19,7 +19,7 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private IEl<float> currentDelay;
     private IEl<int> currentEnemies;
-    private IOp<Vector2> preSpawn;
+    private IOp<Vector2> preSpawn; // TODO Not need
     private ILi<Spawning> spawning;
     private ILiWa spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
@@ -77,6 +77,7 @@ public class CompleteEnemySpawner : MonoBehaviour
             new object[] { currentDelay, currentEnemies },
             () =>
             {
+                // TODO Wrong if called multiple times
                 if (currentDelay.Read() <= 0 && currentEnemies.Read() < maxEnemies)
                 {
                     var at = new Vector2(
@@ -193,6 +194,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                 new object[] { CurrentDelay },
                 () =>
                 {
+                    // TODO Wrong if called multiple times
                     if (CurrentDelay.Read() <= 0)
                     {
                         spawn.Fire(At);
