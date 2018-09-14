@@ -112,18 +112,23 @@ public class CompletePlayerController : MonoBehaviour
         ));
         {
             Coroutine lastCoroutine = null;
-            cd.Add(new DisposableAction(() =>
+            System.Action disposeLast = () =>
             {
-                if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
-            }));
+                if (lastCoroutine != null)
+                {
+                    G.Instance.StopCoroutine(lastCoroutine);
+                    lastCoroutine = null;
+                }
+            };
+            cd.Add(new DisposableAction(disposeLast));
             cd.Add(G.Engine.RegisterListener(
-                new object[] { movement, G.Restart },
+                new object[] { movement, G.IsGameRunning },
                 () =>
                 {
-                    if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
+                    disposeLast();
                     lastCoroutine = G.Instance.StartCoroutine(LoopFixedUpdate(
                         rb2d,
-                        needStop: G.Restart.Read().Count > 0,
+                        needStop: !G.IsGameRunning.Read(),
                         forceToAdd: movement.Read() * speed
                     ));
                 }
@@ -143,11 +148,13 @@ public class CompletePlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (!G.IsGameRunning.Read()) return;
-
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
-        movement.Write(new Vector2(moveHorizontal, moveVertical));
+        var v = Vector2.zero;
+        if (G.IsGameRunning.Read())
+        {
+            v.x = Input.GetAxis("Horizontal");
+            v.y = Input.GetAxis("Vertical");
+        }
+        movement.Write(v);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
