@@ -7,7 +7,6 @@ public class G : MonoBehaviour
     public static G Instance { get; private set; }
 
     public static readonly IEngine Engine = new MultithreadEngine();
-    public static readonly IEl<float> TimeScale = Engine.El(1f);
     public static readonly IEl<bool> IsTutorialInfoShowing = Engine.El(false);
     public static readonly IOp<Empty> StartGame = Engine.Op<Empty>();
     public static readonly IEl<bool> IsGameRunning = Engine.El(false);
@@ -24,8 +23,6 @@ public class G : MonoBehaviour
 
     private void Awake()
     {
-        W.Mark(typeof(Time), "timeScale");
-
         Instance = this;
     }
 
@@ -43,16 +40,6 @@ public class G : MonoBehaviour
                 bool i = IsGameRunning.Read();
                 if (StartGame.Read().Count > 0 && !i) i = true;
                 if (i != IsGameRunning.Read()) IsGameRunning.Write(i);
-            }
-        ));
-        cd.Add(Engine.RegisterComputer(
-            new object[] { IsTutorialInfoShowing, IsGameRunning },
-            () =>
-            {
-                float t = TimeScale.Read();
-                if (IsGameRunning.Read()) t = 1;
-                else if (IsTutorialInfoShowing.Read()) t = 0;
-                if (t != TimeScale.Read()) TimeScale.Write(t);
             }
         ));
         cd.Add(Engine.RegisterComputer(
@@ -75,13 +62,6 @@ public class G : MonoBehaviour
             }
         ));
 
-        cd.Add(Engine.RegisterListener(
-            new object[] { TimeScale },
-            () =>
-            {
-                Time.timeScale = TimeScale.Read();
-            }
-        ));
         {
             var requested = new List<GameObject>();
             cd.Add(Engine.RegisterListener(
