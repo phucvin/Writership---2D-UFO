@@ -110,30 +110,6 @@ public class CompletePlayerController : MonoBehaviour
                 Position.Write(transform.position);
             }
         ));
-        {
-            Coroutine lastCoroutine = null;
-            System.Action disposeLast = () =>
-            {
-                if (lastCoroutine != null)
-                {
-                    G.Instance.StopCoroutine(lastCoroutine);
-                    lastCoroutine = null;
-                }
-            };
-            cd.Add(new DisposableAction(disposeLast));
-            cd.Add(G.Engine.RegisterListener(
-                new object[] { movement, G.IsGameRunning },
-                () =>
-                {
-                    disposeLast();
-                    lastCoroutine = G.Instance.StartCoroutine(LoopFixedUpdate(
-                        rb2d,
-                        needStop: !G.IsGameRunning.Read(),
-                        forceToAdd: movement.Read() * speed
-                    ));
-                }
-            ));
-        }
     }
 
     private void OnApplicationQuit()
@@ -144,6 +120,19 @@ public class CompletePlayerController : MonoBehaviour
     private void OnDisable()
     {
         cd.Dispose();
+    }
+
+    private void FixedUpdate()
+    {
+        if (G.IsGameRunning.Read())
+        {
+            rb2d.AddForce(movement.Read() * speed);
+        }
+        else
+        {
+            rb2d.velocity = Vector2.zero;
+            rb2d.angularVelocity = 0;
+        }
     }
 
     private void Update()
