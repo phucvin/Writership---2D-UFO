@@ -21,7 +21,7 @@ public class CompleteEnemySpawner : MonoBehaviour
     private IEl<int> currentEnemies;
     private IOp<Vector2> preSpawn; // TODO Not need
     private ILi<Spawning> spawning;
-    private ILiWa spawningCurrentDelayWatcher;
+    private IWa spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
     private IOp<Vector2> spawn;
     private System.Random rand;
@@ -34,7 +34,7 @@ public class CompleteEnemySpawner : MonoBehaviour
         currentEnemies = G.Engine.El(0);
         spawn = G.Engine.Op<Vector2>();
         spawning = G.Engine.Li(new List<Spawning>());
-        spawningCurrentDelayWatcher = G.Engine.LiWa(cd, spawning, it => it.CurrentDelay);
+        spawningCurrentDelayWatcher = G.Engine.Wa(cd, spawning, it => it.CurrentDelay);
         preSpawn = G.Engine.Op<Vector2>();
         spawningFactory = new Spawning.Factory();
         rand = new System.Random();
@@ -93,7 +93,7 @@ public class CompleteEnemySpawner : MonoBehaviour
             () =>
             {
                 var p = preSpawn.Read();
-                var w = spawningCurrentDelayWatcher.Read().Count > 0;
+                var w = spawningCurrentDelayWatcher.Read() > 0;
                 var r = G.Restart.Read().Count > 0;
                 if (p.Count <= 0 && !w && !r) return;
 
