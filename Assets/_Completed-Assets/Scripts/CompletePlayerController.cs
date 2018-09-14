@@ -138,6 +138,7 @@ public class CompletePlayerController : MonoBehaviour
 
     private void Update()
     {
+        // TODO Fix this if this inside a writer
         var v = Vector2.zero;
         if (G.IsGameRunning.Read())
         {

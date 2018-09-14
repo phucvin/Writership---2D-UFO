@@ -54,7 +54,8 @@ public class G : MonoBehaviour
                 if (t != TotalItemCount.Read()) TotalItemCount.Write(t);
             }
         );
-        Engine.Computer(cd,
+
+        Engine.Transformer(cd,
             new object[] { TouchEnemy },
             () =>
             {
@@ -92,7 +93,6 @@ public class G : MonoBehaviour
                 }
             );
         }
-
         Engine.Guarder(cd,
             new object[] { Restart, IsGameRunning },
             () =>
