@@ -49,6 +49,14 @@ public class CompletePlayerController : MonoBehaviour
                 if (score != Score.Read()) Score.Write(score);
             }
         ));
+        cd.Add(G.Engine.RegisterComputer(
+            new object[] { Score, G.TotalItemCount },
+            () =>
+            {
+                bool w = Score.Read() >= G.TotalItemCount.Read();
+                if (w != G.IsWinning.Read()) G.IsWinning.Write(w);
+            }
+        ));
 
         cd.Add(G.Engine.RegisterListener(
             new object[] { Score, G.TotalItemCount },

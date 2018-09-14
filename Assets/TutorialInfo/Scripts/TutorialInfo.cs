@@ -34,6 +34,7 @@ public class TutorialInfo : MonoBehaviour
         W.Mark(overlay, "active");
         W.Mark(mainListener, "enabled");
         W.Mark(animator, "setTrigger_close");
+        W.Mark(animator, "setTrigger_open");
 
         if (PlayerPrefs.HasKey(ShowAtStartPrefsKey))
         {
@@ -56,11 +57,12 @@ public class TutorialInfo : MonoBehaviour
             }
         ));
         cd.Add(G.Engine.RegisterComputer(
-            new object[] { G.IsGameRunning, ShowAtStart },
+            new object[] { G.IsGameRunning, ShowAtStart, G.Restart },
             () =>
             {
                 bool i = G.IsTutorialInfoShowing.Read();
                 if (G.IsGameRunning.Read()) i = false;
+                else if (G.Restart.Read().Count > 0) i = true;
                 else if (ShowAtStart.Read()) i = true;
                 if (i != G.IsTutorialInfoShowing.Read()) G.IsTutorialInfoShowing.Write(i);
             }
@@ -82,6 +84,13 @@ public class TutorialInfo : MonoBehaviour
                 bool i = G.IsTutorialInfoShowing.Read();
                 overlay.SetActive(i);
                 mainListener.enabled = !i;
+            }
+        ));
+        cd.Add(G.Engine.RegisterListener(
+            new object[] { G.Restart },
+            () =>
+            {
+                if (G.Restart.Read().Count > 0) animator.SetTrigger("open");
             }
         ));
     }

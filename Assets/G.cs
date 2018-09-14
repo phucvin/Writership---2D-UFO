@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Writership;
 
@@ -10,7 +11,7 @@ public class G : MonoBehaviour
     public static readonly IEl<bool> IsTutorialInfoShowing = Engine.El(false);
     public static readonly IOp<Empty> StartGame = Engine.Op<Empty>();
     public static readonly IEl<bool> IsGameRunning = Engine.El(false);
-    public static readonly IOp<Empty> Restart = Engine.Op<Empty>();
+    public static readonly IOp<Empty> Restart = Engine.Op<Empty>(allowWriters: true);
     public static readonly IOp<Ops.PickUp> PickUp = Engine.Op<Ops.PickUp>();
     public static readonly IOp<float> Tick = Engine.Op<float>();
     public static readonly IEl<int> TotalItemCount = Engine.El(0);
@@ -18,6 +19,7 @@ public class G : MonoBehaviour
     public static readonly IOp<GameObject> RequestDestroy = Engine.Op<GameObject>();
     public static readonly IOp<Ops.Hit> Hit = Engine.Op<Ops.Hit>();
     public static readonly IOp<Empty> TouchEnemy = Engine.Op<Empty>();
+    public static readonly IEl<bool> IsWinning = Engine.El(false);
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -34,11 +36,12 @@ public class G : MonoBehaviour
     private void OnEnable()
     {
         cd.Add(Engine.RegisterComputer(
-            new object[] { StartGame },
+            new object[] { StartGame, Restart },
             () =>
             {
                 bool i = IsGameRunning.Read();
-                if (StartGame.Read().Count > 0 && !i) i = true;
+                if (StartGame.Read().Count > 0) i = true;
+                else if (Restart.Read().Count > 0) i = false;
                 if (i != IsGameRunning.Read()) IsGameRunning.Write(i);
             }
         ));
@@ -55,7 +58,7 @@ public class G : MonoBehaviour
             new object[] { TouchEnemy },
             () =>
             {
-                if (TouchEnemy.Read().Count > 0)
+                if (TouchEnemy.Read().Count > 0 && !IsWinning.Read())
                 {
                     Restart.Fire(Empty.Instance);
                 }
@@ -89,6 +92,17 @@ public class G : MonoBehaviour
                 }
             ));
         }
+
+        cd.Add(Engine.RegisterComputer(
+            new object[] { Restart, IsGameRunning },
+            () =>
+            {
+                if (Restart.Read().Count > 0 && !IsGameRunning.Read())
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+        ));
     }
 
     private void OnDisable()
