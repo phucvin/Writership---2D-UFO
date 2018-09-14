@@ -17,6 +17,8 @@ public class TutorialInfo : MonoBehaviour
     [SerializeField]
     private Toggle showAtStartToggle = null;
 
+    private Animator animator;
+
     public IEl<bool> ShowAtStart { get; private set; }
     public IOp<Empty> ToggleShowAtStart { get; private set; }
 
@@ -24,10 +26,14 @@ public class TutorialInfo : MonoBehaviour
 
     private void Awake()
     {
+        animator = GetComponent<Animator>();
+        if (!animator) throw new MissingComponentException("Animator");
+
         W.Mark(typeof(PlayerPrefs), ShowAtStartPrefsKey);
         W.Mark(showAtStartToggle, "isOn");
         W.Mark(overlay, "active");
         W.Mark(mainListener, "enabled");
+        W.Mark(animator, "setTrigger_close");
 
         if (PlayerPrefs.HasKey(ShowAtStartPrefsKey))
         {
@@ -91,6 +97,11 @@ public class TutorialInfo : MonoBehaviour
     }
 
     public void StartGame()
+    {
+        animator.SetTrigger("close");
+    }
+
+    public void Closed()
     {
         G.StartGame.Fire(Empty.Instance);
     }

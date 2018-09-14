@@ -91,6 +91,8 @@ public class CompleteGun : MonoBehaviour
 
     private void Update()
     {
+        if (!G.IsGameRunning.Read()) return;
+
         bool f = Input.GetButton("Fire1");
         if (f != isManualFiring.Read()) isManualFiring.Write(f);
     }

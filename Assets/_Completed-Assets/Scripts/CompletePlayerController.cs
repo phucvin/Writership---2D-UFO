@@ -135,6 +135,8 @@ public class CompletePlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (!G.IsGameRunning.Read()) return;
+
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         movement.Write(new Vector2(moveHorizontal, moveVertical));

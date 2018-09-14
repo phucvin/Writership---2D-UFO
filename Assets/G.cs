@@ -119,7 +119,7 @@ public class G : MonoBehaviour
 
     private void LateUpdate()
     {
-        Tick.Fire(Time.deltaTime);
+        if (IsGameRunning.Read()) Tick.Fire(Time.deltaTime);
 
         Engine.Update();
         W.Cull();
