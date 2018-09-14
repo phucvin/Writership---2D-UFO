@@ -55,7 +55,7 @@ public class G : MonoBehaviour
             }
         );
 
-        Engine.Transformer(cd,
+        Engine.Firer(cd,
             new object[] { TouchEnemy },
             () =>
             {
