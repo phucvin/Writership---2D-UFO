@@ -42,25 +42,24 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd, new object[] { currentEnemies, G.Tick, spawn, G.Restart }, () =>
+        G.Engine.Computer(cd, new object[] { currentEnemies, currentDelay, G.Tick, spawning, G.Restart }, () =>
         {
             if (G.Restart) currentDelay.Write(delay);
-            else if (currentEnemies < maxEnemies)
+            else if (currentEnemies + spawning.Count < maxEnemies)
             {
-                // TODO Complex without preSpawn op
-                currentDelay.Write(Mathf.Max(0, (spawn ? delay : currentDelay) - G.Tick.Reduced));
+                currentDelay.Write(Mathf.Max(0, (currentDelay <= 0 ? delay : currentDelay) - G.Tick.Reduced));
             }
+            else currentDelay.Write(delay);
         });
         G.Engine.Computer(cd, new object[] { spawn, G.Hit, G.Restart }, () =>
         {
             if (G.Restart) currentEnemies.Write(0);
             else currentEnemies.Write(currentEnemies + spawn.Count - G.Hit.Count);
         });
-        G.Engine.Computer(cd, new object[] { currentDelay, currentEnemies, spawning, spawningCurrentDelayWatcher, G.Restart }, () =>
+        G.Engine.Computer(cd, new object[] { currentDelay, currentEnemies, spawningCurrentDelayWatcher, G.Restart }, () =>
         {
             var spawning = this.spawning.AsWriteProxy();
-            // TODO Complex without preSpawn op
-            if (currentDelay <= 0 && currentEnemies + spawning.Count < maxEnemies)
+            if (currentDelay <= 0)
             {
                 var at = new Vector2(
                     rand.Next((int)(-area.x / 2), (int)(area.x / 2)),
