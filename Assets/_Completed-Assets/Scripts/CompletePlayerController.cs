@@ -83,6 +83,16 @@ public class CompletePlayerController : MonoBehaviour
             if (G.Restart) transform.position = orgPos;
             Position.Write(transform.position);
         });
+        G.Engine.Writer(cd, new object[] { G.Tick, G.IsGameRunning }, () =>
+        {
+            var v = Vector2.zero;
+            if (G.IsGameRunning)
+            {
+                v.x = Input.GetAxis("Horizontal");
+                v.y = Input.GetAxis("Vertical");
+            }
+            movement.Write(v);
+        });
     }
 
     private void OnApplicationQuit()
@@ -106,18 +116,6 @@ public class CompletePlayerController : MonoBehaviour
             rb2d.velocity = Vector2.zero;
             rb2d.angularVelocity = 0;
         }
-    }
-
-    private void Update()
-    {
-        // TODO Fix this if this inside a writer
-        var v = Vector2.zero;
-        if (G.IsGameRunning)
-        {
-            v.x = Input.GetAxis("Horizontal");
-            v.y = Input.GetAxis("Vertical");
-        }
-        movement.Write(v);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -144,22 +142,5 @@ public class CompletePlayerController : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         restart.Fire(Empty.Instance);
-    }
-
-    private static IEnumerator LoopFixedUpdate(Rigidbody2D rb2d, bool needStop, Vector2 forceToAdd)
-    {
-        if (needStop)
-        {
-            rb2d.velocity = Vector2.zero;
-            rb2d.angularVelocity = 0;
-        }
-        else
-        {
-            while (true)
-            {
-                yield return new WaitForFixedUpdate();
-                rb2d.AddForce(forceToAdd);
-            }
-        }
     }
 }
