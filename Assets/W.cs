@@ -35,6 +35,7 @@ public static class W/*itership*/
 
     private struct Value
     {
+        // TODO Save whole stack trace ?
         public string FileName;
         public int LineNumber;
     }

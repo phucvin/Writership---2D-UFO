@@ -3,10 +3,10 @@ using Writership;
 
 public class CompletePlayerAi : MonoBehaviour
 {
-    public IEl<bool> IsEnabled { get; private set; }
-    public IEl<bool> IsGunFiring { get; private set; }
+    public El<bool> IsEnabled { get; private set; }
+    public El<bool> IsGunFiring { get; private set; }
 
-    private IOp<Empty> toggle;
+    private Op<Empty> toggle;
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -19,31 +19,23 @@ public class CompletePlayerAi : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd,
-            new object[] { toggle },
-            () =>
+        G.Engine.Computer(cd, new object[] { toggle }, () =>
+        {
+            if (toggle.Count % 2 == 1)
             {
-                if (toggle.Read().Count % 2 == 1)
-                {
-                    IsEnabled.Write(!IsEnabled.Read());
-                }
+                IsEnabled.Write(!IsEnabled);
             }
-        );
+        });
 
-        G.Engine.Reader(cd,
-            new object[] { IsEnabled, G.Tick },
-            () =>
+        G.Engine.Writer(cd, new object[] { IsEnabled, G.Tick }, () =>
+        {
+            if (!IsEnabled) IsGunFiring.Write(false);
+            else if (G.Tick)
             {
-                bool g = IsGunFiring.Read();
-                if (!IsEnabled.Read()) g = false;
-                else if (G.Tick.Read().Count > 0)
-                {
-                    var hit = Physics2D.Raycast(transform.position, transform.right, 10, 1 << 8);
-                    g = hit && hit.transform;
-                }
-                if (g != IsGunFiring.Read()) IsGunFiring.Write(g);
+                var hit = Physics2D.Raycast(transform.position, transform.right, 10, 1 << 8);
+                IsGunFiring.Write(hit && hit.transform);
             }
-        );
+        });
     }
 
     private void OnDisable()

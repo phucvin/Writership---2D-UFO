@@ -12,10 +12,10 @@ public class CompleteGun : MonoBehaviour
     [SerializeField]
     private CompletePlayerAi ai = null;
 
-    private IEl<bool> isFiring;
-    private IEl<bool> isManualFiring;
-    private IEl<float> currentDelay;
-    private IOp<Empty> fire;
+    private El<bool> isFiring;
+    private El<bool> isManualFiring;
+    private El<float> currentDelay;
+    private Op<Empty> fire;
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -29,59 +29,38 @@ public class CompleteGun : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd,
-            new object[] { isFiring, currentDelay, G.Tick },
-            () =>
+        G.Engine.Computer(cd, new object[] { isFiring, currentDelay, G.Tick }, () =>
+        {
+            float v = currentDelay.Read();
+            if (isFiring)
             {
-                bool f = isFiring.Read();
-                float d = currentDelay.Read();
-                var t = G.Tick.Read();
-                float ticks = 0;
-                for (int i = 0, n = t.Count; i < n; ++i)
+                v -= G.Tick.Reduced;
+                while (v < 0)
                 {
-                    ticks += t[i];
-                }
-
-                if (f)
-                {
-                    d -= ticks;
-                    while (d < 0)
-                    {
-                        d += delay;
-                        fire.Fire(Empty.Instance);
-                    }
-                }
-                else
-                {
-                    d = Mathf.Max(0, d - ticks);
-                }
-
-                if (d != currentDelay.Read()) currentDelay.Write(d);
-            }
-        );
-        G.Engine.Computer(cd,
-            new object[] { isManualFiring, ai.IsGunFiring },
-            () =>
-            {
-                bool f = isFiring.Read();
-                f = isManualFiring.Read() || ai.IsGunFiring.Read();
-                if (f != isFiring.Read()) isFiring.Write(f);
-            }
-        );
-
-        G.Engine.Reader(cd,
-            new object[] { fire },
-            () =>
-            {
-                var f = fire.Read();
-                for (int i = 0, n = f.Count; i < n; ++i)
-                {
-                    var b = Instantiate(bullet, transform.position, transform.rotation);
-                    W.Mark(b, "active");
-                    b.SetActive(true);
+                    v += delay;
+                    fire.Fire(Empty.Instance);
                 }
             }
-        );
+            else
+            {
+                v = Mathf.Max(0, v - G.Tick.Reduced);
+            }
+            currentDelay.Write(v);
+        });
+        G.Engine.Computer(cd, new object[] { isManualFiring, ai.IsGunFiring }, () =>
+        {
+            isFiring.Write(isManualFiring || ai.IsGunFiring);
+        });
+
+        G.Engine.Reader(cd, new object[] { fire }, () =>
+        {
+            for (int i = 0, n = fire.Count; i < n; ++i)
+            {
+                var b = Instantiate(bullet, transform.position, transform.rotation);
+                W.Mark(b, "active");
+                b.SetActive(true);
+            }
+        });
     }
 
     private void OnDisable()
@@ -91,9 +70,9 @@ public class CompleteGun : MonoBehaviour
 
     private void Update()
     {
-        if (!G.IsGameRunning.Read()) return;
+        if (!G.IsGameRunning) return;
 
         bool f = Input.GetButton("Fire1");
-        if (f != isManualFiring.Read()) isManualFiring.Write(f);
+        isManualFiring.Write(f);
     }
 }

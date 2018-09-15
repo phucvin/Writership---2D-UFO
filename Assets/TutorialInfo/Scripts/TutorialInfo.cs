@@ -19,8 +19,8 @@ public class TutorialInfo : MonoBehaviour
 
     private Animator animator;
 
-    public IEl<bool> ShowAtStart { get; private set; }
-    public IOp<Empty> ToggleShowAtStart { get; private set; }
+    public El<bool> ShowAtStart { get; private set; }
+    public Op<Empty> ToggleShowAtStart { get; private set; }
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -52,52 +52,34 @@ public class TutorialInfo : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd,
-            new object[] { ToggleShowAtStart },
-            () =>
+        G.Engine.Computer(cd, new object[] { ToggleShowAtStart }, () =>
+        {
+            if (ToggleShowAtStart.Count % 2 == 1)
             {
-                bool s = ShowAtStart.Read();
-                if (ToggleShowAtStart.Read().Count % 2 == 1) s = !s;
-                if (s != ShowAtStart.Read()) ShowAtStart.Write(s);
+                ShowAtStart.Write(!ShowAtStart);
             }
-        );
-        G.Engine.Computer(cd,
-            new object[] { G.IsGameRunning, ShowAtStart, G.Restart },
-            () =>
-            {
-                bool i = G.IsTutorialInfoShowing.Read();
-                if (G.Restart.Read().Count > 0) i = true;
-                else if (G.IsGameRunning.Read()) i = false;
-                else if (ShowAtStart.Read()) i = true;
-                if (i != G.IsTutorialInfoShowing.Read()) G.IsTutorialInfoShowing.Write(i);
-            }
-        );
+        });
+        G.Engine.Computer(cd, new object[] { G.IsGameRunning, ShowAtStart, G.Restart }, () =>
+        {
+            if (G.Restart) G.IsTutorialInfoShowing.Write(true);
+            else if (G.IsGameRunning) G.IsTutorialInfoShowing.Write(false);
+            else if (ShowAtStart) G.IsTutorialInfoShowing.Write(true);
+        });
 
-        G.Engine.Reader(cd,
-            new object[] { ShowAtStart },
-            () =>
-            {
-                bool s = ShowAtStart.Read();
-                PlayerPrefs.SetInt(ShowAtStartPrefsKey, s ? 1 : 0);
-                if (showAtStartToggle.isOn != s) showAtStartToggle.isOn = s;
-            }
-        );
-        G.Engine.Reader(cd,
-            new object[] { G.IsTutorialInfoShowing },
-            () =>
-            {
-                bool i = G.IsTutorialInfoShowing.Read();
-                overlay.SetActive(i);
-                mainListener.enabled = !i;
-            }
-        );
-        G.Engine.Reader(cd,
-            new object[] { G.Restart },
-            () =>
-            {
-                if (G.Restart.Read().Count > 0) animator.SetTrigger("open");
-            }
-        );
+        G.Engine.Reader(cd, new object[] { ShowAtStart }, () =>
+        {
+            PlayerPrefs.SetInt(ShowAtStartPrefsKey, ShowAtStart ? 1 : 0);
+            showAtStartToggle.isOn = ShowAtStart;
+        });
+        G.Engine.Reader(cd, new object[] { G.IsTutorialInfoShowing }, () =>
+        {
+            overlay.SetActive(G.IsTutorialInfoShowing);
+            mainListener.enabled = !G.IsTutorialInfoShowing;
+        });
+        G.Engine.Reader(cd, new object[] { G.Restart }, () =>
+        {
+            if (G.Restart) animator.SetTrigger("open");
+        });
     }
 
     private void OnDisable()
@@ -122,7 +104,8 @@ public class TutorialInfo : MonoBehaviour
 
     public void ToggleShowAtLaunch()
     {
-        if (showAtStartToggle.isOn != ShowAtStart.Read())
+        // TODO Should be able to remove this condition, just fire
+        if (showAtStartToggle.isOn != ShowAtStart)
         {
             ToggleShowAtStart.Fire(Empty.Instance);
         }

@@ -15,10 +15,10 @@ public class CompletePlayerController : MonoBehaviour
     private Rigidbody2D rb2d;
     private Vector3 orgPos;
 
-    public IEl<Vector3> Position { get; private set; }
-    public IEl<int> Score { get; private set; }
+    public El<Vector3> Position { get; private set; }
+    public El<int> Score { get; private set; }
 
-    private IEl<Vector2> movement;
+    private El<Vector2> movement;
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -39,41 +39,26 @@ public class CompletePlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd,
-            new object[] { G.PickUp, G.Restart },
-            () =>
-            {
-                int score = Score.Read();
-                if (G.Restart.Read().Count > 0) score = 0;
-                score += G.PickUp.Read().Count;
-                if (score != Score.Read()) Score.Write(score);
-            }
-        );
-        G.Engine.Computer(cd,
-            new object[] { Score, G.TotalItemCount },
-            () =>
-            {
-                bool w = Score.Read() >= G.TotalItemCount.Read();
-                if (w != G.IsWinning.Read()) G.IsWinning.Write(w);
-            }
-        );
+        G.Engine.Computer(cd, new object[] { G.PickUp, G.Restart }, () =>
+        {
+            if (G.Restart) Score.Write(0);
+            else Score.Write(Score + G.PickUp.Count);
+        });
+        G.Engine.Computer(cd, new object[] { Score, G.TotalItemCount }, () =>
+        {
+            G.IsWinning.Write(Score >= G.TotalItemCount);
+        });
 
-        G.Engine.Reader(cd,
-            new object[] { Score, G.TotalItemCount },
-            () =>
-            {
-                countText.text = string.Format("Count: {0} / {1}",
-                    Score.Read(), G.TotalItemCount.Read());
-            }
-        );
-        G.Engine.Reader(cd,
-            new object[] { Score, G.TotalItemCount },
-            () =>
-            {
-                if (Score.Read() >= G.TotalItemCount.Read()) winText.text = "You win!";
-                else winText.text = "";
-            }
-        );
+        G.Engine.Reader(cd, new object[] { Score, G.TotalItemCount }, () =>
+        {
+            countText.text = string.Format("Count: {0} / {1}",
+                Score, G.TotalItemCount);
+        });
+        G.Engine.Reader(cd, new object[] { Score, G.TotalItemCount }, () =>
+        {
+            if (Score >= G.TotalItemCount) winText.text = "You win!";
+            else winText.text = "";
+        });
         {
             bool canRestart = false;
             Coroutine lastCoroutine = null;
@@ -81,36 +66,24 @@ public class CompletePlayerController : MonoBehaviour
             {
                 if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
             }));
-            G.Engine.Reader(cd,
-                new object[] { Score, G.TotalItemCount },
-                () =>
+            G.Engine.Reader(cd, new object[] { Score, G.TotalItemCount }, () =>
+            {
+                // TODO Maybe wrong if call multiple times
+                if (Score < G.TotalItemCount) canRestart = true;
+                if (Score >= G.TotalItemCount && canRestart)
                 {
-                    int score = Score.Read();
-                    int total = G.TotalItemCount.Read();
-                    if (score < total) canRestart = true;
-                    if (score >= total && canRestart)
-                    {
-                        canRestart = false;
-                        if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
-                        lastCoroutine = G.Instance.StartCoroutine(WaitThenRestart(G.Restart));
-                    }
+                    canRestart = false;
+                    if (lastCoroutine != null) G.Instance.StopCoroutine(lastCoroutine);
+                    lastCoroutine = G.Instance.StartCoroutine(WaitThenRestart(G.Restart));
                 }
-            );
+            });
         }
 
-        G.Engine.Writer(cd,
-            new object[] { G.Tick, G.Restart },
-            () =>
-            {
-                if (G.Tick.Read().Count <= 0 && G.Restart.Read().Count <= 0) return;
-
-                if (G.Restart.Read().Count > 0)
-                {
-                    transform.position = orgPos;
-                }
-                Position.Write(transform.position);
-            }
-        );
+        G.Engine.Writer(cd, new object[] { G.Tick, G.Restart }, () =>
+        {
+            if (G.Restart) transform.position = orgPos;
+            Position.Write(transform.position);
+        });
     }
 
     private void OnApplicationQuit()
@@ -125,7 +98,7 @@ public class CompletePlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (G.IsGameRunning.Read())
+        if (G.IsGameRunning)
         {
             rb2d.AddForce(movement.Read() * speed);
         }
@@ -140,7 +113,7 @@ public class CompletePlayerController : MonoBehaviour
     {
         // TODO Fix this if this inside a writer
         var v = Vector2.zero;
-        if (G.IsGameRunning.Read())
+        if (G.IsGameRunning)
         {
             v.x = Input.GetAxis("Horizontal");
             v.y = Input.GetAxis("Vertical");

@@ -17,13 +17,13 @@ public class CompleteEnemySpawner : MonoBehaviour
     [SerializeField]
     private float indicating = 1f;
 
-    private IEl<float> currentDelay;
-    private IEl<int> currentEnemies;
-    private IOp<Vector2> preSpawn; // TODO Not need
-    private ILi<Spawning> spawning;
-    private IWa spawningCurrentDelayWatcher;
+    private El<float> currentDelay;
+    private El<int> currentEnemies;
+    private Op<Vector2> preSpawn; // TODO Not need
+    private Li<Spawning> spawning;
+    private Wa spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
-    private IOp<Vector2> spawn;
+    private Op<Vector2> spawn;
     private System.Random rand;
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
@@ -44,93 +44,60 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Computer(cd,
-            new object[] { currentEnemies, G.Tick, spawn, G.Restart },
-            () =>
-            {
-                var t = G.Tick.Read();
-                var d = currentDelay.Read();
-                if (G.Restart.Read().Count > 0)
-                {
-                    d = delay;
-                }
-                else if (currentEnemies.Read() < maxEnemies)
-                {
-                    if (spawn.Read().Count > 0) d = delay;
-                    for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
-                    d = Mathf.Max(0, d);
-                }
-                if (d != currentDelay.Read()) currentDelay.Write(d);
-            }
-        );
-        G.Engine.Computer(cd,
-            new object[] { spawn, G.Hit, G.Restart },
-            () =>
-            {
-                int e = currentEnemies.Read();
-                if (G.Restart.Read().Count > 0) e = 0;
-                else e = e + spawn.Read().Count - G.Hit.Read().Count;
-                if (e != currentEnemies.Read()) currentEnemies.Write(e);
-            }
-        );
-        G.Engine.Computer(cd,
-            new object[] { currentDelay, currentEnemies },
-            () =>
-            {
-                // TODO Wrong if called multiple times
-                if (currentDelay.Read() <= 0 && currentEnemies.Read() < maxEnemies)
-                {
-                    var at = new Vector2(
-                        rand.Next((int)(-area.x / 2), (int)(area.x / 2)),
-                        rand.Next((int)(-area.y / 2), (int)(area.y / 2))
-                    );
-                    preSpawn.Fire(at);
-                }
-            }
-        );
-        G.Engine.Computer(cd,
-            new object[] { preSpawn, spawningCurrentDelayWatcher, G.Restart },
-            () =>
-            {
-                var p = preSpawn.Read();
-                var w = spawningCurrentDelayWatcher.Read() > 0;
-                var r = G.Restart.Read().Count > 0;
-                if (p.Count <= 0 && !w && !r) return;
-
-                var s = spawning.AsWrite();
-                for (int i = 0, n = p.Count; i < n; ++i)
-                {
-                    s.Add(spawningFactory.Create(p[i], indicating));
-                }
-                if (w || r)
-                {
-                    s.RemoveAll(it =>
-                    {
-                        if (it.CurrentDelay.Read() <= 0 || r)
-                        {
-                            spawningFactory.Dispose(it);
-                            return true;
-                        }
-                        else return false;
-                    });
-                }
-            }
-        );
-
-        G.Engine.Reader(cd,
-            new object[] { spawn },
-            () =>
-            {
-                var s = spawn.Read();
-                for (int i = 0, n = s.Count; i < n; ++i)
-                {
-                    var e = Instantiate(what, transform.position + (Vector3)s[i], transform.rotation);
-                    W.Mark(e, "active");
-                    e.SetActive(true);
-                }
-            }
-        );
+        G.Engine.Computer(cd, new object[] { currentEnemies, G.Tick, spawn, G.Restart }, () =>
         {
+            if (G.Restart) currentDelay.Write(delay);
+            else if (currentEnemies < maxEnemies)
+            {
+                currentDelay.Write(Mathf.Max(0, (spawn ? delay : currentDelay) - G.Tick.Reduced));
+            }
+        });
+        G.Engine.Computer(cd, new object[] { spawn, G.Hit, G.Restart }, () =>
+        {
+            if (G.Restart) currentEnemies.Write(0);
+            else currentEnemies.Write(currentEnemies + spawn.Count - G.Hit.Count);
+        });
+        G.Engine.Computer(cd, new object[] { currentDelay, currentEnemies }, () =>
+        {
+            // TODO Wrong if called multiple times
+            if (currentDelay <= 0 && currentEnemies < maxEnemies)
+            {
+                var at = new Vector2(
+                    rand.Next((int)(-area.x / 2), (int)(area.x / 2)),
+                    rand.Next((int)(-area.y / 2), (int)(area.y / 2))
+                );
+                preSpawn.Fire(at);
+            }
+        });
+        G.Engine.Computer(cd, new object[] { preSpawn, spawningCurrentDelayWatcher, G.Restart }, () =>
+        {
+            var spawning = this.spawning.AsWriteProxy();
+            for (int i = 0, n = preSpawn.Count; i < n; ++i)
+            {
+                spawning.Add(spawningFactory.Create(preSpawn[i], indicating));
+            }
+            spawning.RemoveAll(it =>
+            {
+                if (it.CurrentDelay.Read() <= 0 || G.Restart)
+                {
+                    spawningFactory.Dispose(it);
+                    return true;
+                }
+                else return false;
+            });
+            spawning.Commit();
+        });
+
+        G.Engine.Reader(cd, new object[] { spawn }, () =>
+        {
+            for (int i = 0, n = spawn.Count; i < n; ++i)
+            {
+                var e = Instantiate(what, transform.position + (Vector3)spawn[i], transform.rotation);
+                W.Mark(e, "active");
+                e.SetActive(true);
+            }
+        });
+        { // TODO Common, reduce boilerplate
             var created = new List<GameObject>();
             System.Action destroyCreated = () =>
             {
@@ -141,23 +108,19 @@ public class CompleteEnemySpawner : MonoBehaviour
                 created.Clear();
             };
             cd.Add(new DisposableAction(destroyCreated));
-            G.Engine.Reader(cd,
-                new object[] { spawning },
-                () =>
-                {
-                    destroyCreated();
+            G.Engine.Reader(cd, new object[] { spawning }, () =>
+            {
+                destroyCreated();
 
-                    var s = spawning.Read();
-                    for (int i = 0, n = s.Count; i < n; ++i)
-                    {
-                        var o = Instantiate(indicator, transform.position + (Vector3)s[i].At, transform.rotation);
-                        W.Mark(o, "destroy");
-                        W.Mark(o, "active");
-                        o.SetActive(true);
-                        created.Add(o);
-                    }
+                for (int i = 0, n = spawning.Count; i < n; ++i)
+                {
+                    var o = Instantiate(indicator, transform.position + (Vector3)spawning[i].At, transform.rotation);
+                    W.Mark(o, "destroy");
+                    W.Mark(o, "active");
+                    o.SetActive(true);
+                    created.Add(o);
                 }
-            );
+            });
         }
     }
 
@@ -169,7 +132,7 @@ public class CompleteEnemySpawner : MonoBehaviour
     private class Spawning
     {
         public readonly Vector2 At;
-        public readonly IEl<float> CurrentDelay;
+        public readonly El<float> CurrentDelay;
 
         public Spawning(IEngine engine, Vector2 at, float delay)
         {
@@ -178,39 +141,27 @@ public class CompleteEnemySpawner : MonoBehaviour
         }
 
         public void Setup(CompositeDisposable cd, IEngine engine,
-            IOp<float> tick, IOp<Vector2> spawn)
+            Op<float> tick, Op<Vector2> spawn)
         {
-            engine.Computer(cd,
-                new object[] { tick },
-                () =>
-                {
-                    float d = CurrentDelay.Read();
-                    var t = tick.Read();
-                    for (int i = 0, n = t.Count; i < n; ++i) d -= t[i];
-                    if (d != CurrentDelay.Read()) CurrentDelay.Write(d);
-                }
-            );
-            engine.Computer(cd,
-                new object[] { CurrentDelay },
-                () =>
-                {
-                    // TODO Wrong if called multiple times
-                    if (CurrentDelay.Read() <= 0)
-                    {
-                        spawn.Fire(At);
-                    }
-                }
-            );
+            engine.Computer(cd, new object[] { tick }, () =>
+            {
+                CurrentDelay.Write(CurrentDelay - tick.Reduced);
+            });
+            engine.Computer(cd, new object[] { CurrentDelay }, () =>
+            {
+                // TODO Wrong if called multiple times
+                if (CurrentDelay <= 0) spawn.Fire(At);
+            });
         }
 
         public class Factory : CompositeDisposableFactory<Spawning>
         {
             private IEngine engine;
-            private IOp<float> tick;
-            private IOp<Vector2> spawn;
+            private Op<float> tick;
+            private Op<Vector2> spawn;
 
             public void Setup(CompositeDisposable cd, IEngine engine,
-                IOp<float> tick, IOp<Vector2> spawn)
+                Op<float> tick, Op<Vector2> spawn)
             {
                 this.engine = engine;
                 this.tick = tick;

@@ -12,26 +12,22 @@ public class CompleteEffect : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Reader(cd,
-            new object[] { G.Restart, G.RequestDestroy },
-            () =>
+        G.Engine.Reader(cd, new object[] { G.Restart, G.RequestDestroy }, () =>
+        {
+            bool isRequested = false;
+            for (int i = 0, n = G.RequestDestroy.Count; i < n; ++i)
             {
-                var r = G.RequestDestroy.Read();
-                bool isRequested = false;
-                for (int i = 0, n = r.Count; i < n; ++i)
+                if (G.RequestDestroy[i] == gameObject)
                 {
-                    if (r[i] == gameObject)
-                    {
-                        isRequested = true;
-                        break;
-                    }
-                }
-                if (isRequested || G.Restart.Read().Count > 0)
-                {
-                    Destroy(gameObject);
+                    isRequested = true;
+                    break;
                 }
             }
-        );
+            if (isRequested || G.Restart)
+            {
+                Destroy(gameObject);
+            }
+        });
     }
 
     private void OnDisable()

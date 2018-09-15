@@ -8,18 +8,18 @@ public class G : MonoBehaviour
     public static G Instance { get; private set; }
 
     public static readonly IEngine Engine = new MultithreadEngine();
-    public static readonly IEl<bool> IsTutorialInfoShowing = Engine.El(false);
-    public static readonly IOp<Empty> StartGame = Engine.Op<Empty>(allowWriters: true);
-    public static readonly IEl<bool> IsGameRunning = Engine.El(false);
-    public static readonly IOp<Empty> Restart = Engine.Op<Empty>(allowWriters: true);
-    public static readonly IOp<Ops.PickUp> PickUp = Engine.Op<Ops.PickUp>();
-    public static readonly IOp<float> Tick = Engine.Op<float>();
-    public static readonly IEl<int> TotalItemCount = Engine.El(0);
-    public static readonly IOp<Empty> AddItem = Engine.Op<Empty>();
-    public static readonly IOp<GameObject> RequestDestroy = Engine.Op<GameObject>();
-    public static readonly IOp<Ops.Hit> Hit = Engine.Op<Ops.Hit>();
-    public static readonly IOp<Empty> TouchEnemy = Engine.Op<Empty>();
-    public static readonly IEl<bool> IsWinning = Engine.El(false);
+    public static readonly El<bool> IsTutorialInfoShowing = Engine.El(false);
+    public static readonly Op<Empty> StartGame = Engine.Op<Empty>(allowWriters: true);
+    public static readonly El<bool> IsGameRunning = Engine.El(false);
+    public static readonly Op<Empty> Restart = Engine.Op<Empty>(allowWriters: true);
+    public static readonly Op<Ops.PickUp> PickUp = Engine.Op<Ops.PickUp>();
+    public static readonly Op<float> Tick = Engine.Op<float>(reducer: (a, b) => a + b);
+    public static readonly El<int> TotalItemCount = Engine.El(0);
+    public static readonly Op<Empty> AddItem = Engine.Op<Empty>();
+    public static readonly Op<GameObject> RequestDestroy = Engine.Op<GameObject>();
+    public static readonly Op<Ops.Hit> Hit = Engine.Op<Ops.Hit>();
+    public static readonly Op<Empty> TouchEnemy = Engine.Op<Empty>();
+    public static readonly El<bool> IsWinning = Engine.El(false);
 
     private readonly CompositeDisposable cd = new CompositeDisposable();
 
@@ -35,36 +35,20 @@ public class G : MonoBehaviour
 
     private void OnEnable()
     {
-        Engine.Computer(cd,
-            new object[] { StartGame, Restart },
-            () =>
-            {
-                bool i = IsGameRunning.Read();
-                if (StartGame.Read().Count > 0) i = true;
-                else if (Restart.Read().Count > 0) i = false;
-                if (i != IsGameRunning.Read()) IsGameRunning.Write(i);
-            }
-        );
-        Engine.Computer(cd,
-            new object[] { AddItem },
-            () =>
-            {
-                int t = TotalItemCount.Read();
-                t += AddItem.Read().Count;
-                if (t != TotalItemCount.Read()) TotalItemCount.Write(t);
-            }
-        );
+        Engine.Computer(cd, new object[] { StartGame, Restart }, () =>
+        {
+            if (StartGame) IsGameRunning.Write(true);
+            else if (Restart) IsGameRunning.Write(false);
+        });
+        Engine.Computer(cd, new object[] { AddItem }, () =>
+        {
+            TotalItemCount.Write(TotalItemCount + AddItem.Count);
+        });
 
-        Engine.Firer(cd,
-            new object[] { TouchEnemy },
-            () =>
-            {
-                if (TouchEnemy.Read().Count > 0 && !IsWinning.Read())
-                {
-                    Restart.Fire(Empty.Instance);
-                }
-            }
-        );
+        Engine.Firer(cd, new object[] { TouchEnemy }, () =>
+        {
+            if (TouchEnemy && !IsWinning) Restart.Fire(Empty.Instance);
+        });
 
         {
             var requested = new List<GameObject>();
@@ -72,7 +56,7 @@ public class G : MonoBehaviour
                 new object[] { Tick, RequestDestroy },
                 () =>
                 {
-                    if (Tick.Read().Count > 0)
+                    if (Tick)
                     {
                         GameObject stillAlive = null;
                         for (int i = 0, n = requested.Count; i < n; ++i)
@@ -89,20 +73,18 @@ public class G : MonoBehaviour
                         }
                         requested.Clear();
                     }
+
                     requested.AddRange(RequestDestroy.Read());
                 }
             );
         }
-        Engine.Guarder(cd,
-            new object[] { Restart, IsGameRunning },
-            () =>
+        Engine.Guarder(cd, new object[] { Restart, IsGameRunning }, () =>
+        {
+            if (Restart && !IsGameRunning)
             {
-                if (Restart.Read().Count > 0 && !IsGameRunning.Read())
-                {
-                    throw new InvalidOperationException();
-                }
+                throw new InvalidOperationException();
             }
-        );
+        });
     }
 
     private void OnDisable()
@@ -113,7 +95,7 @@ public class G : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (IsGameRunning.Read()) Tick.Fire(Time.deltaTime);
+        if (IsGameRunning) Tick.Fire(Time.deltaTime);
 
         Engine.Update();
         W.Cull();

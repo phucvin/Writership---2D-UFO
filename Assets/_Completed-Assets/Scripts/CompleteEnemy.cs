@@ -12,24 +12,19 @@ public class CompleteEnemy : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Reader(cd,
-            new object[] { G.Hit, G.Restart },
-            () =>
+        G.Engine.Reader(cd, new object[] { G.Hit, G.Restart }, () =>
+        {
+            bool hit = false;
+            for (int i = 0, n = G.Hit.Count; i < n; ++i)
             {
-                var h = G.Hit.Read();
-                var r = G.Restart.Read().Count > 0;
-                bool d = false;
-                for (int i = 0, n = h.Count; i < n; ++i)
+                if (G.Hit[i].ToEnemy == gameObject)
                 {
-                    if (h[i].ToEnemy == gameObject)
-                    {
-                        d = true;
-                        break;
-                    }
+                    hit = true;
+                    break;
                 }
-                if (d || r) Destroy(gameObject);
             }
-        );
+            if (hit || G.Restart) Destroy(gameObject);
+        });
     }
 
     private void OnDisable()

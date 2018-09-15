@@ -19,13 +19,10 @@ public class CompleteCameraController : MonoBehaviour
 
     private void OnEnable()
     {
-        G.Engine.Reader(cd,
-            new object[] { player.Position },
-            () =>
-            {
-                transform.position = player.Position.Read() + offset;
-            }
-        );
+        G.Engine.Reader(cd, new object[] { player.Position }, () =>
+        {
+            transform.position = player.Position.Read() + offset;
+        });
     }
 
     private void OnDisable()
