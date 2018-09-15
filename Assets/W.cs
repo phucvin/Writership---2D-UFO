@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public static class W/*itership*/
@@ -33,43 +34,28 @@ public static class W/*itership*/
         }
     }
 
-    private struct Value
-    {
-        // TODO Save whole stack trace ?
-        public string FileName;
-        public int LineNumber;
-    }
-
-    private static readonly Dictionary<Key, Value> dict = new Dictionary<Key, Value>();
+    private static readonly Dictionary<Key, StackTrace> dict = new Dictionary<Key, StackTrace>();
 
     public static void Mark(object target, string child = null)
     {
         if (ReferenceEquals(target, null)) throw new InvalidOperationException("target");
 
         Key key = new Key { Target = target, Child = child };
-        Value value;
+        StackTrace value;
         dict.TryGetValue(key, out value);
 
-        var frame = new System.Diagnostics.StackFrame(1, true);
-        string nowFileName = frame.GetFileName();
-        int nowLineNumber = frame.GetFileLineNumber();
+        var now = new StackTrace(1, true);
 
-        if (string.IsNullOrEmpty(nowFileName) || nowLineNumber <= 0)
+        if (value == null)
         {
-            throw new InvalidOperationException("Cannot get stack frame");
-        }
-
-        if (value.FileName == null)
-        {
-            value.FileName = nowFileName;
-            value.LineNumber = nowLineNumber;
+            value = now;
             dict.Add(key, value);
         }
-        else if (value.FileName != nowFileName || value.LineNumber != nowLineNumber)
+        else if (!IsSame(now, value))
         {
-            Debug.LogWarningFormat("W.Mark different at: {0}:{1} != {2}:{3}",
-                System.IO.Path.GetFileName(nowFileName), nowLineNumber,
-                System.IO.Path.GetFileName(value.FileName), value.LineNumber);
+            UnityEngine.Debug.LogWarning("Last mark: \n" + value.ToString());
+            UnityEngine.Debug.LogWarning("Now mark: \n" + now.ToString());
+            throw new InvalidOperationException("Cannot mark to same at different places");
         }
     }
 
@@ -86,5 +72,20 @@ public static class W/*itership*/
         {
             dict.Remove(deadKeys[i]);
         }
+    }
+
+    private static bool IsSame(StackTrace a, StackTrace b)
+    {
+        if (a.FrameCount != b.FrameCount) return false;
+        for (int i = 0, n = a.FrameCount; i < n; ++i)
+        {
+            var af = a.GetFrame(i);
+            var bf = b.GetFrame(i);
+            if (af.GetMethod() != bf.GetMethod())
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }
