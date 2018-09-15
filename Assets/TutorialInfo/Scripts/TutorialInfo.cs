@@ -54,16 +54,12 @@ public class TutorialInfo : MonoBehaviour
     {
         G.Engine.Computer(cd, new object[] { ToggleShowAtStart }, () =>
         {
-            if (ToggleShowAtStart.Count % 2 == 1)
-            {
-                ShowAtStart.Write(!ShowAtStart);
-            }
+            if (ToggleShowAtStart.Count % 2 == 1) ShowAtStart.Write(!ShowAtStart);
         });
-        G.Engine.Computer(cd, new object[] { G.IsGameRunning, ShowAtStart, G.Restart }, () =>
+        G.Engine.Computer(cd, new object[] { G.IsGameRunning, G.Restart }, () =>
         {
             if (G.Restart) G.IsTutorialInfoShowing.Write(true);
-            else if (G.IsGameRunning) G.IsTutorialInfoShowing.Write(false);
-            else if (ShowAtStart) G.IsTutorialInfoShowing.Write(true);
+            else G.IsTutorialInfoShowing.Write(!G.IsGameRunning);
         });
 
         G.Engine.Reader(cd, new object[] { ShowAtStart }, () =>
@@ -104,7 +100,7 @@ public class TutorialInfo : MonoBehaviour
 
     public void ToggleShowAtLaunch()
     {
-        // TODO Should be able to remove this condition, just fire
+        // Should be able to remove this condition, if op contains true/false instead of empty
         if (showAtStartToggle.isOn != ShowAtStart)
         {
             ToggleShowAtStart.Fire(Empty.Instance);

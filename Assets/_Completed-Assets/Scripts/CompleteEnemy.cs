@@ -14,16 +14,18 @@ public class CompleteEnemy : MonoBehaviour
     {
         G.Engine.Reader(cd, new object[] { G.Hit, G.Restart }, () =>
         {
-            bool hit = false;
-            for (int i = 0, n = G.Hit.Count; i < n; ++i)
+            if (G.Restart) Destroy(gameObject);
+            else
             {
-                if (G.Hit[i].ToEnemy == gameObject)
+                for (int i = 0, n = G.Hit.Count; i < n; ++i)
                 {
-                    hit = true;
-                    break;
+                    if (G.Hit[i].ToEnemy == gameObject)
+                    {
+                        Destroy(gameObject);
+                        break;
+                    }
                 }
             }
-            if (hit || G.Restart) Destroy(gameObject);
         });
     }
 

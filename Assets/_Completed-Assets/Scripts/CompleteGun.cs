@@ -31,21 +31,17 @@ public class CompleteGun : MonoBehaviour
     {
         G.Engine.Computer(cd, new object[] { isFiring, currentDelay, G.Tick }, () =>
         {
-            float v = currentDelay.Read();
             if (isFiring)
             {
-                v -= G.Tick.Reduced;
-                while (v < 0)
+                float tmp = currentDelay - G.Tick.Reduced;
+                while (tmp < 0)
                 {
-                    v += delay;
+                    tmp += delay;
                     fire.Fire(Empty.Instance);
                 }
+                currentDelay.Write(tmp);
             }
-            else
-            {
-                v = Mathf.Max(0, v - G.Tick.Reduced);
-            }
-            currentDelay.Write(v);
+            else currentDelay.Write(Mathf.Max(0, currentDelay - G.Tick.Reduced));
         });
         G.Engine.Computer(cd, new object[] { isManualFiring, ai.IsGunFiring }, () =>
         {

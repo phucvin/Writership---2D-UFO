@@ -19,7 +19,6 @@ public class CompleteEnemySpawner : MonoBehaviour
 
     private El<float> currentDelay;
     private El<int> currentEnemies;
-    private Op<Vector2> preSpawn; // TODO Not need
     private Li<Spawning> spawning;
     private Wa spawningCurrentDelayWatcher;
     private Spawning.Factory spawningFactory;
@@ -35,7 +34,6 @@ public class CompleteEnemySpawner : MonoBehaviour
         spawn = G.Engine.Op<Vector2>();
         spawning = G.Engine.Li(new List<Spawning>());
         spawningCurrentDelayWatcher = G.Engine.Wa(cd, spawning, it => it.CurrentDelay);
-        preSpawn = G.Engine.Op<Vector2>();
         spawningFactory = new Spawning.Factory();
         rand = new System.Random();
 
@@ -49,6 +47,7 @@ public class CompleteEnemySpawner : MonoBehaviour
             if (G.Restart) currentDelay.Write(delay);
             else if (currentEnemies < maxEnemies)
             {
+                // TODO Complex without preSpawn op
                 currentDelay.Write(Mathf.Max(0, (spawn ? delay : currentDelay) - G.Tick.Reduced));
             }
         });
@@ -57,24 +56,17 @@ public class CompleteEnemySpawner : MonoBehaviour
             if (G.Restart) currentEnemies.Write(0);
             else currentEnemies.Write(currentEnemies + spawn.Count - G.Hit.Count);
         });
-        G.Engine.Computer(cd, new object[] { currentDelay, currentEnemies }, () =>
+        G.Engine.Computer(cd, new object[] { currentDelay, currentEnemies, spawning, spawningCurrentDelayWatcher, G.Restart }, () =>
         {
-            // TODO Wrong if called multiple times
-            if (currentDelay <= 0 && currentEnemies < maxEnemies)
+            var spawning = this.spawning.AsWriteProxy();
+            // TODO Complex without preSpawn op
+            if (currentDelay <= 0 && currentEnemies + spawning.Count < maxEnemies)
             {
                 var at = new Vector2(
                     rand.Next((int)(-area.x / 2), (int)(area.x / 2)),
                     rand.Next((int)(-area.y / 2), (int)(area.y / 2))
                 );
-                preSpawn.Fire(at);
-            }
-        });
-        G.Engine.Computer(cd, new object[] { preSpawn, spawningCurrentDelayWatcher, G.Restart }, () =>
-        {
-            var spawning = this.spawning.AsWriteProxy();
-            for (int i = 0, n = preSpawn.Count; i < n; ++i)
-            {
-                spawning.Add(spawningFactory.Create(preSpawn[i], indicating));
+                spawning.Add(spawningFactory.Create(at, indicating));
             }
             spawning.RemoveAll(it =>
             {
@@ -97,7 +89,7 @@ public class CompleteEnemySpawner : MonoBehaviour
                 e.SetActive(true);
             }
         });
-        { // TODO Common, reduce boilerplate
+        {
             var created = new List<GameObject>();
             System.Action destroyCreated = () =>
             {
@@ -149,7 +141,6 @@ public class CompleteEnemySpawner : MonoBehaviour
             });
             engine.Computer(cd, new object[] { CurrentDelay }, () =>
             {
-                // TODO Wrong if called multiple times
                 if (CurrentDelay <= 0) spawn.Fire(At);
             });
         }

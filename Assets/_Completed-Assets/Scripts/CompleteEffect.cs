@@ -14,18 +14,17 @@ public class CompleteEffect : MonoBehaviour
     {
         G.Engine.Reader(cd, new object[] { G.Restart, G.RequestDestroy }, () =>
         {
-            bool isRequested = false;
-            for (int i = 0, n = G.RequestDestroy.Count; i < n; ++i)
+            if (G.Restart) Destroy(gameObject);
+            else
             {
-                if (G.RequestDestroy[i] == gameObject)
+                for (int i = 0, n = G.RequestDestroy.Count; i < n; ++i)
                 {
-                    isRequested = true;
-                    break;
+                    if (G.RequestDestroy[i] == gameObject)
+                    {
+                        Destroy(gameObject);
+                        return;
+                    }
                 }
-            }
-            if (isRequested || G.Restart)
-            {
-                Destroy(gameObject);
             }
         });
     }

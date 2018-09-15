@@ -68,7 +68,6 @@ public class CompletePlayerController : MonoBehaviour
             }));
             G.Engine.Reader(cd, new object[] { Score, G.TotalItemCount }, () =>
             {
-                // TODO Maybe wrong if call multiple times
                 if (Score < G.TotalItemCount) canRestart = true;
                 if (Score >= G.TotalItemCount && canRestart)
                 {

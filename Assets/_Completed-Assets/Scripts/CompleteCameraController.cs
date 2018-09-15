@@ -21,7 +21,7 @@ public class CompleteCameraController : MonoBehaviour
     {
         G.Engine.Reader(cd, new object[] { player.Position }, () =>
         {
-            transform.position = player.Position.Read() + offset;
+            transform.position = player.Position + offset;
         });
     }
 

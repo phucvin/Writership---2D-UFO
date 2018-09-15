@@ -21,10 +21,7 @@ public class CompletePlayerAi : MonoBehaviour
     {
         G.Engine.Computer(cd, new object[] { toggle }, () =>
         {
-            if (toggle.Count % 2 == 1)
-            {
-                IsEnabled.Write(!IsEnabled);
-            }
+            if (toggle.Count % 2 == 1) IsEnabled.Write(!IsEnabled);
         });
 
         G.Engine.Writer(cd, new object[] { IsEnabled, G.Tick }, () =>

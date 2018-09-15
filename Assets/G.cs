@@ -80,10 +80,7 @@ public class G : MonoBehaviour
         }
         Engine.Guarder(cd, new object[] { Restart, IsGameRunning }, () =>
         {
-            if (Restart && !IsGameRunning)
-            {
-                throw new InvalidOperationException();
-            }
+            if (Restart && !IsGameRunning) throw new InvalidOperationException();
         });
     }
 
